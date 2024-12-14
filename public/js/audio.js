@@ -17,11 +17,11 @@ let location = window.location.href;
 // Load file âm thanh
 async function loadSound() {
     try {
-        const response = await fetch(location+"public/music/sound.mp3");
+        const response = await fetch("../music/sound.mp3");
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     } catch (e) {
-        console.error('Không thể load file âm thanh:', e);
+        console.error("Không thể load file âm thanh:", e);
     }
 }
 
