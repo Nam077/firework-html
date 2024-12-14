@@ -6,7 +6,7 @@ import { initUI } from './ui.js';
 import { initCountdown } from '../../js/countdown.js';
 
 // Hàm khởi tạo chính
-function init() {
+async function init() {
     // Initialize UI
     initUI();
 
@@ -196,6 +196,8 @@ function init() {
     initOnUserInteraction();
 
     initCountdown();
+    initNumberStrips(); // Thêm dòng này
+
 }
 
 // Khởi chạy ứng dụng
