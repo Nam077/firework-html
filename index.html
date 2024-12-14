@@ -145,21 +145,12 @@
         /* Switch styles */
         .switch-container {
             position: fixed;
-            bottom: -34px; /* Ẩn switch */
+            bottom: 20px;
             right: 20px;
-            transition: bottom 0.3s ease;
-            z-index: 100;
-            padding: 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-
-        .switch-container:hover {
-            bottom: 10px; /* Hiện switch khi hover */
+            gap: 10px;
+            z-index: 1000;
         }
 
         .switch {
@@ -224,41 +215,185 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Thêm style cho countdown */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap');
+
+        .countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .countdown > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .number-wrapper {
+            position: relative;
+            height: 100px;
+            width: 80px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .number-strip {
+            position: absolute;
+            width: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .number {
+            height: 100px;
+            width: 100%;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4em;
+            font-weight: 700;
+            background: linear-gradient(to bottom, #fff, #a5a5a5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            backface-visibility: hidden;
+        }
+
+        .countdown-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            color: #ccc;
+            position: relative;
+        }
+
+        .countdown-label::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+
+        /* Thêm animation khi số thay đổi */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .countdown span.changed {
+            animation: pulse 0.3s ease-out;
+        }
+
+        /* Style cho countdown */
+        .countdown > div {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .countdown > div::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+
+        .help-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .help-button:hover {
+            background: #45a049;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
     <canvas id="fireworks"></canvas>
+    <div id="countdown" class="countdown">
+        <div>
+            <div class="number-wrapper">
+                <div id="days-strip" class="number-strip"></div>
+            </div>
+            <span class="countdown-label">Days</span>
+        </div>
+        <div>
+            <div class="number-wrapper">
+                <div id="hours-strip" class="number-strip"></div>
+            </div>
+            <span class="countdown-label">Hours</span>
+        </div>
+        <div>
+            <div class="number-wrapper">
+                <div id="minutes-strip" class="number-strip"></div>
+            </div>
+            <span class="countdown-label">Minutes</span>
+        </div>
+        <div>
+            <div class="number-wrapper">
+                <div id="seconds-strip" class="number-strip"></div>
+            </div>
+            <span class="countdown-label">Seconds</span>
+        </div>
+    </div>
     <div class="controls-container" id="controlsContainer">
         <div class="content" id="content">
-            <h1>Happy New Year 2025!</h1>
-            <div class="countdown" id="countdown">
-                <div class="time">
-                    <span id="days">00</span>
-                    <span class="label">Days</span>
-                </div>
-                <div class="time">
-                    <span id="hours">00</span>
-                    <span class="label">Hours</span>
-                </div>
-                <div class="time">
-                    <span id="minutes">00</span>
-                    <span class="label">Minutes</span>
-                </div>
-                <div class="time">
-                    <span id="seconds">00</span>
-                    <span class="label">Seconds</span>
-                </div>
-            </div>
+            <!-- <h1>Happy New Year 2025!</h1> -->
         </div>
         <div class="mode-display">
             <span id="modeText">Chế độ: Ngẫu nhiên</span>
             <span id="scenarioText"></span>
         </div>
-        <button class="help-btn" onclick="openHelp()">Hướng dẫn</button>
+        <button class="help-btn" id="helpButton">Hướng dẫn</button>
     </div>
     <div class="switch-container">
         <label class="switch">
-            <input type="checkbox" id="uiToggle" checked onclick="toggleUI()">
+            <input type="checkbox" id="uiToggle" checked>
             <span class="slider"></span>
         </label>
         <span class="switch-label">Công tắc</span>
@@ -326,36 +461,5 @@
         </div>
     </div>
     <script type="module" src="public/js/main.js"></script>
-    <script>
-        // Modal control
-        const modal = document.getElementById('helpModal');
-        const closeBtn = document.getElementsByClassName('close')[0];
-        const uiToggle = document.getElementById('uiToggle');
-        const controlsContainer = document.getElementById('controlsContainer');
-        
-        function toggleUI() {
-            controlsContainer.classList.toggle('hidden');
-        }
-        
-        function openHelp() {
-            modal.style.display = "block";
-        }
-        
-        closeBtn.onclick = function() {
-            modal.style.display = "none";
-        }
-        
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-
-        // Show modal on first visit
-        if (!localStorage.getItem('hasVisited')) {
-            openHelp();
-            localStorage.setItem('hasVisited', true);
-        }
-    </script>
 </body>
 </html>
