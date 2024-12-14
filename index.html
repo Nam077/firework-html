@@ -26,10 +26,30 @@
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
-            max-width: 500px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
             animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
 
         @keyframes modalSlideIn {
@@ -98,58 +118,209 @@
             border-radius: 3px;
             margin: 0 5px;
         }
+
+        .mode-display {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 16px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .mode-display span {
+            display: block;
+            margin: 5px 0;
+        }
+
+        #scenarioText {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Switch styles */
+        .switch-container {
+            position: fixed;
+            bottom: -34px; /* Ẩn switch */
+            right: 20px;
+            transition: bottom 0.3s ease;
+            z-index: 100;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .switch-container:hover {
+            bottom: 10px; /* Hiện switch khi hover */
+        }
+
+        .switch {
+            width: 60px;
+            height: 34px;
+            position: relative;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: .4s;
+            border-radius: 34px;
+            backdrop-filter: blur(5px);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: rgba(76, 175, 80, 0.6);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .switch-label {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* Controls container */
+        .controls-container {
+            transition: opacity 0.3s;
+        }
+
+        .controls-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <canvas id="fireworks"></canvas>
-    <div class="content" id="content">
-        <h1>Happy New Year 2025!</h1>
-        <div class="countdown" id="countdown">
-            <div class="time">
-                <span id="days">00</span>
-                <span class="label">Days</span>
-            </div>
-            <div class="time">
-                <span id="hours">00</span>
-                <span class="label">Hours</span>
-            </div>
-            <div class="time">
-                <span id="minutes">00</span>
-                <span class="label">Minutes</span>
-            </div>
-            <div class="time">
-                <span id="seconds">00</span>
-                <span class="label">Seconds</span>
+    <div class="controls-container" id="controlsContainer">
+        <div class="content" id="content">
+            <h1>Happy New Year 2025!</h1>
+            <div class="countdown" id="countdown">
+                <div class="time">
+                    <span id="days">00</span>
+                    <span class="label">Days</span>
+                </div>
+                <div class="time">
+                    <span id="hours">00</span>
+                    <span class="label">Hours</span>
+                </div>
+                <div class="time">
+                    <span id="minutes">00</span>
+                    <span class="label">Minutes</span>
+                </div>
+                <div class="time">
+                    <span id="seconds">00</span>
+                    <span class="label">Seconds</span>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="controls">
-        <button id="toggleUI" class="toggle-button">Toggle UI</button>
+        <div class="mode-display">
+            <span id="modeText">Chế độ: Ngẫu nhiên</span>
+            <span id="scenarioText"></span>
+        </div>
         <button class="help-btn" onclick="openHelp()">Hướng dẫn</button>
+    </div>
+    <div class="switch-container">
+        <label class="switch">
+            <input type="checkbox" id="uiToggle" checked onclick="toggleUI()">
+            <span class="slider"></span>
+        </label>
+        <span class="switch-label">Công tắc</span>
     </div>
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>🎆 Hướng dẫn sử dụng 🎆</h2>
+            <h2>🎆 Hướng dẫn điều khiển 🎆</h2>
             <ul>
                 <li><kbd>Space</kbd> Chuyển đổi giữa chế độ ngẫu nhiên và kịch bản</li>
-                <li><kbd>1</kbd> Kịch bản 1: Lễ hội ánh sáng (6 cảnh)</li>
-                <li><kbd>2</kbd> Kịch bản 2: Vũ điệu tình yêu (6 cảnh)</li>
-                <li><kbd>3</kbd> Kịch bản 3: Bão lửa rồng (6 cảnh)</li>
+                <li><kbd>Q</kbd> đến <kbd>]</kbd> Chọn kịch bản 1-12</li>
+                <li><kbd>C</kbd> Công tắc hiển thị giao diện</li>
             </ul>
-            <h2>🎆 Chi tiết kịch bản 🎆</h2>
+            <h2>🎆 Danh sách kịch bản 🎆</h2>
             <ul>
                 <li>
-                    <strong>Lễ hội ánh sáng:</strong><br>
+                    <strong>Q - Lễ hội ánh sáng</strong><br>
                     Hoa đăng → Vòng hoa sen → Vũ điệu ánh sáng → Mưa sao băng → Vòng xoắn kép → Kết thúc rực rỡ
                 </li>
                 <li>
-                    <strong>Vũ điệu tình yêu:</strong><br>
+                    <strong>W - Vũ điệu tình yêu</strong><br>
                     Bướm đôi → Vòng trái tim → Thiên thần → Mưa tình yêu → Vũ điệu thiên thần → Kết thúc ngọt ngào
                 </li>
                 <li>
-                    <strong>Bão lửa rồng:</strong><br>
+                    <strong>E - Bão lửa rồng</strong><br>
                     Rồng thức tỉnh → Vòng xoáy rồng → Xoáy lốc lửa → Mưa sao lửa → Vũ điệu rồng → Kết thúc hoành tráng
+                </li>
+                <li>
+                    <strong>R - Rainbow Symphony</strong><br>
+                    Cầu vồng → Mưa sắc màu → Vũ điệu cầu vồng → Xoáy màu → Bức tranh sắc màu → Kết thúc rực rỡ
+                </li>
+                <li>
+                    <strong>T - Starry Night Fantasy</strong><br>
+                    Sao băng → Vũ điệu thiên hà → Mưa sao → Vòng xoáy sao → Dải ngân hà → Kết thúc lung linh
+                </li>
+                <li>
+                    <strong>Y - Crystal Cascade</strong><br>
+                    Pha lê → Thác nước → Vũ điệu pha lê → Mưa kim cương → Vòng xoáy pha lê → Kết thúc lấp lánh
+                </li>
+                <li>
+                    <strong>U - Phoenix Rising</strong><br>
+                    Phượng hoàng → Vũ điệu lửa → Mưa lửa → Xoáy lửa → Phượng hoàng tái sinh → Kết thúc rực cháy
+                </li>
+                <li>
+                    <strong>I - Ocean Dreams</strong><br>
+                    Sóng biển → Vũ điệu biển → Mưa ngọc trai → Xoáy nước → Đại dương xanh → Kết thúc mênh mông
+                </li>
+                <li>
+                    <strong>O - Garden of Light</strong><br>
+                    Hoa sáng → Vũ điệu hoa → Mưa ánh sáng → Vòng xoáy hoa → Khu vườn ánh sáng → Kết thúc rực rỡ
+                </li>
+                <li>
+                    <strong>P - Dragon Dance</strong><br>
+                    Rồng vàng → Vũ điệu rồng → Mưa vàng → Xoáy rồng → Long vương xuất hiện → Kết thúc hoành tráng
+                </li>
+                <li>
+                    <strong>[ - Aurora Borealis</strong><br>
+                    Cực quang → Vũ điệu ánh sáng → Mưa cực quang → Xoáy cực quang → Bắc cực quang → Kết thúc huyền ảo
+                </li>
+                <li>
+                    <strong>] - Cosmic Journey</strong><br>
+                    Vũ trụ → Vũ điệu thiên hà → Mưa sao → Lỗ đen → Vũ trụ bao la → Kết thúc vô tận
                 </li>
             </ul>
         </div>
@@ -159,6 +330,12 @@
         // Modal control
         const modal = document.getElementById('helpModal');
         const closeBtn = document.getElementsByClassName('close')[0];
+        const uiToggle = document.getElementById('uiToggle');
+        const controlsContainer = document.getElementById('controlsContainer');
+        
+        function toggleUI() {
+            controlsContainer.classList.toggle('hidden');
+        }
         
         function openHelp() {
             modal.style.display = "block";

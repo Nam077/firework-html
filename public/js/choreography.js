@@ -10,7 +10,8 @@ class FireworkShow {
             this.circleFormation.bind(this),
             this.cascadeEffect.bind(this),
             this.crossPattern.bind(this),
-            this.spiralStaircase.bind(this)
+            this.spiralStaircase.bind(this),
+            this.rainbowSymphony.bind(this)
         ];
         this.currentSequence = 0;
         this.lastLaunchTime = 0;
@@ -260,284 +261,938 @@ class FireworkShow {
     }
 
     async createChoreography() {
-        if (this.isPlaying) return; // Nếu đang chạy thì không chạy nữa
+        if (this.isPlaying) return;
         this.isPlaying = true;
         
-        // Reset thởi gian
-        this.currentTime = 0;
-        
-        // Kịch bản mới
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
+        const height = canvas.height * this.options.height;
+        const spread = canvas.width * this.options.spread;
         
         switch(this.currentChoreography) {
             case 1: // Kịch bản 1: Lễ hội ánh sáng
-                // Cảnh 1: Hoa đăng dâng lên
+                // Mở đầu: Hoa đăng dâng lên
                 this.setEffectType('flower');
-                for (let i = 0; i < 5; i++) {
-                    const x = centerX - canvas.width * 0.4 + i * (canvas.width * 0.2);
-                    await this.addFirework(x, canvas.height, x, canvas.height * 0.4, i * 0.2);
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Đợi 5 giây
-
-                // Cảnh 2: Vòng tròn hoa sen
-                this.setEffectType('flower');
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2;
-                    const radius = canvas.width * 0.2;
-                    await this.addFirework(
-                        centerX,
-                        canvas.height,
-                        centerX + Math.cos(angle) * radius,
-                        canvas.height * 0.5 + Math.sin(angle) * radius,
-                        i * 0.2
-                    );
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 3: Vũ điệu ánh sáng
-                this.setEffectType('spiral');
-                for (let i = 0; i < 4; i++) {
-                    const angle = (i / 4) * Math.PI * 2;
-                    await this.addFirework(
-                        centerX + Math.cos(angle) * 200,
-                        canvas.height,
-                        centerX + Math.cos(angle) * 100,
-                        canvas.height * 0.3,
-                        i * 0.2
-                    );
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 4: Mưa sao băng vàng
-                this.setEffectType('rain');
                 for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 4; j++) {
-                        const x = centerX - canvas.width * 0.3 + j * (canvas.width * 0.2);
-                        await this.addFirework(x, canvas.height, x, canvas.height * (0.3 + i * 0.15), i * 0.2);
-                    }
+                    const x = centerX - spread + i * spread;
+                    await this.addFirework(x, canvas.height, x, height - 200 - i * 50, 0.3);
                 }
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
-                // Cảnh 5: Vòng xoắn kép
-                this.setEffectType('spiral');
-                for (let i = 0; i < 2; i++) {
-                    for (let j = 0; j < 6; j++) {
-                        const angle = (j / 6) * Math.PI * 2;
-                        const radius = 150 + i * 100;
-                        await this.addFirework(
-                            centerX,
-                            canvas.height,
-                            centerX + Math.cos(angle) * radius,
-                            canvas.height * 0.4 + Math.sin(angle) * radius * 0.5,
-                            i * 0.2
-                        );
-                    }
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 6: Màn kết thúc rực rỡ
-                const finalPromises1 = [];
-                this.setEffectType('heart');
+                // Hiệu ứng kết hợp vòng tròn và sao
+                const promises1 = [];
+                this.setEffectType('circle');
                 for (let i = 0; i < 5; i++) {
                     const angle = (i / 5) * Math.PI * 2;
-                    finalPromises1.push(this.addFirework(
-                        centerX + Math.cos(angle) * 200,
+                    promises1.push(this.addFirework(
+                        centerX,
                         canvas.height,
-                        centerX + Math.cos(angle) * 100,
-                        canvas.height * 0.3,
+                        centerX + Math.cos(angle) * spread * 0.8,
+                        height - 250,
                         i * 0.2
                     ));
                 }
-                await Promise.all(finalPromises1);
+                this.setEffectType('star');
+                for (let i = 0; i < 3; i++) {
+                    const angle = (i / 3) * Math.PI * 2;
+                    promises1.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * spread * 0.4,
+                        height - 350,
+                        i * 0.2
+                    ));
+                }
+                await Promise.all(promises1);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Hiệu ứng kết hợp bướm và hoa
+                const promises2 = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 2; i++) {
+                    const offset = spread * 0.6;
+                    promises2.push(this.addFirework(
+                        centerX - offset + i * offset * 2,
+                        canvas.height,
+                        centerX - offset + i * offset * 2,
+                        height - 300,
+                        i * 0.3
+                    ));
+                }
+                this.setEffectType('flower');
+                promises2.push(this.addFirework(centerX, canvas.height, centerX, height - 400, 0.4));
+                await Promise.all(promises2);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Kết thúc hoành tráng
+                const finalPromises = [];
+                this.setEffectType('phoenix');
+                finalPromises.push(this.addFirework(centerX, canvas.height, centerX, height - 450, 0));
+                
+                this.setEffectType('heart');
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2;
+                    finalPromises.push(this.addFirework(
+                        centerX + Math.cos(angle) * spread * 0.5,
+                        canvas.height,
+                        centerX + Math.cos(angle) * spread * 0.5,
+                        height - 350,
+                        0.2
+                    ));
+                }
+                await Promise.all(finalPromises);
                 break;
 
             case 2: // Kịch bản 2: Vũ điệu tình yêu
-                // Cảnh 1: Cánh bướm đôi
-                for (let i = 0; i < 3; i++) {
-                    this.setEffectType('butterfly');
-                    const offset = canvas.width * 0.15;
-                    await Promise.all([
-                        this.addFirework(centerX - offset, canvas.height, centerX - offset, canvas.height * 0.3, i * 0.2),
-                        this.addFirework(centerX + offset, canvas.height, centerX + offset, canvas.height * 0.3, i * 0.2)
-                    ]);
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 2: Vòng trái tim
+                // Mở đầu với trái tim đơn lẻ
                 this.setEffectType('heart');
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i / 6) * Math.PI * 2;
-                    const radius = canvas.width * 0.25;
-                    await this.addFirework(
-                        centerX,
-                        canvas.height,
-                        centerX + Math.cos(angle) * radius,
-                        canvas.height * 0.4 + Math.sin(angle) * radius * 0.5,
-                        i * 0.2
-                    );
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await this.addFirework(centerX, canvas.height, centerX, height - 300, 0);
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
-                // Cảnh 3: Thiên thần vũ điệu
+                // Hiệu ứng kết hợp bướm và trái tim
+                const lovePromises1 = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 2; i++) {
+                    const offset = spread * 0.4;
+                    lovePromises1.push(this.addFirework(
+                        centerX - offset + i * offset * 2,
+                        canvas.height,
+                        centerX - offset + i * offset * 2,
+                        height - 250,
+                        i * 0.3
+                    ));
+                }
+                this.setEffectType('heart');
+                lovePromises1.push(this.addFirework(centerX, canvas.height, centerX, height - 350, 0.4));
+                await Promise.all(lovePromises1);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Hiệu ứng kết hợp sao và hoa
+                const lovePromises2 = [];
                 this.setEffectType('star');
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i / 5) * Math.PI * 2;
-                    await this.addFirework(
-                        centerX + Math.cos(angle) * 200,
-                        canvas.height,
-                        centerX + Math.cos(angle) * 100,
-                        canvas.height * 0.3,
-                        i * 0.2
-                    );
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 4: Mưa tình yêu
-                this.setEffectType('heart');
-                for (let i = 0; i < 4; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        const x = centerX - canvas.width * 0.3 + j * (canvas.width * 0.3);
-                        await this.addFirework(
-                            x,
-                            canvas.height,
-                            x + (i % 2 === 0 ? 50 : -50),
-                            canvas.height * (0.4 - i * 0.1),
-                            i * 0.2
-                        );
-                    }
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 5: Vũ điệu thiên thần
-                this.setEffectType('butterfly');
-                for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 4; j++) {
-                        const angle = (j / 4) * Math.PI * 2;
-                        const radius = 150 + i * 50;
-                        await this.addFirework(
-                            centerX,
-                            canvas.height,
-                            centerX + Math.cos(angle) * radius,
-                            canvas.height * 0.4 - i * 50,
-                            i * 0.2
-                        );
-                    }
-                }
-
-                // Cảnh 6: Kết thúc ngọt ngào
-                const finalPromises2 = [];
-                this.setEffectType('heart');
-                finalPromises2.push(this.addFirework(centerX, canvas.height, centerX, canvas.height * 0.3, 0));
-                this.setEffectType('butterfly');
                 for (let i = 0; i < 4; i++) {
                     const angle = (i / 4) * Math.PI * 2;
-                    finalPromises2.push(this.addFirework(
-                        centerX + Math.cos(angle) * 150,
+                    lovePromises2.push(this.addFirework(
+                        centerX + Math.cos(angle) * spread * 0.6,
                         canvas.height,
-                        centerX + Math.cos(angle) * 150,
-                        canvas.height * 0.4,
+                        centerX + Math.cos(angle) * spread * 0.6,
+                        height - 300,
                         i * 0.2
                     ));
                 }
-                await Promise.all(finalPromises2);
+                this.setEffectType('flower');
+                lovePromises2.push(this.addFirework(centerX, canvas.height, centerX, height - 400, 0.5));
+                await Promise.all(lovePromises2);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Kết thúc với vòng trái tim
+                const loveFinalPromises = [];
+                this.setEffectType('heart');
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const radius = spread * 0.5;
+                    loveFinalPromises.push(this.addFirework(
+                        centerX + Math.cos(angle) * radius,
+                        canvas.height,
+                        centerX + Math.cos(angle) * radius,
+                        height - 350,
+                        i * 0.2
+                    ));
+                }
+                await Promise.all(loveFinalPromises);
                 break;
 
             case 3: // Kịch bản 3: Bão lửa rồng
-                // Cảnh 1: Rồng lửa thức tỉnh
+                // Mở đầu với phượng hoàng đơn lẻ
+                this.setEffectType('phoenix');
+                await this.addFirework(centerX, canvas.height, centerX, height - 350, 0);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng kết hợp phượng hoàng và xoắn ốc
+                const dragonPromises1 = [];
                 this.setEffectType('phoenix');
                 for (let i = 0; i < 3; i++) {
                     const angle = (i / 3) * Math.PI * 2;
-                    await this.addFirework(
-                        centerX + Math.cos(angle) * 200,
+                    dragonPromises1.push(this.addFirework(
+                        centerX + Math.cos(angle) * spread * 0.6,
                         canvas.height,
-                        centerX + Math.cos(angle) * 100,
-                        canvas.height * 0.3,
-                        i * 0.2
-                    );
+                        centerX + Math.cos(angle) * spread * 0.6,
+                        height - 300,
+                        i * 0.3
+                    ));
                 }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 2: Vòng xoáy rồng
-                this.setEffectType('phoenix');
-                for (let i = 0; i < 4; i++) {
-                    const angle = (i / 4) * Math.PI * 2;
-                    await this.addFirework(
-                        centerX + Math.cos(angle) * 150,
-                        canvas.height,
-                        centerX + Math.cos(angle) * 75,
-                        canvas.height * 0.4,
-                        i * 0.2
-                    );
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 3: Xoáy lốc lửa
                 this.setEffectType('spiral');
-                for (let i = 0; i < 2; i++) {
-                    for (let j = 0; j < 6; j++) {
-                        const angle = (j / 6) * Math.PI * 2;
-                        const radius = 150 + i * 100;
-                        await this.addFirework(
-                            centerX,
-                            canvas.height,
-                            centerX + Math.cos(angle) * radius,
-                            canvas.height * 0.4 + Math.sin(angle) * radius * 0.5,
-                            i * 0.2
-                        );
-                    }
-                }
+                dragonPromises1.push(this.addFirework(centerX, canvas.height, centerX, height - 400, 0.5));
+                await Promise.all(dragonPromises1);
+                await new Promise(resolve => setTimeout(resolve, 3000));
 
-                // Cảnh 4: Mưa sao lửa
+                // Hiệu ứng kết hợp mưa sao và galaxy
+                const dragonPromises2 = [];
                 this.setEffectType('rain');
                 for (let i = 0; i < 4; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        const x = centerX - canvas.width * 0.3 + j * (canvas.width * 0.3);
-                        await this.addFirework(
-                            x,
-                            canvas.height,
-                            x + (i % 2 === 0 ? 50 : -50),
-                            canvas.height * (0.4 - i * 0.1),
-                            i * 0.2
-                        );
-                    }
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                // Cảnh 5: Vũ điệu rồng lửa
-                this.setEffectType('phoenix');
-                for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 4; j++) {
-                        const angle = (j / 4) * Math.PI * 2;
-                        const radius = 200 - i * 50;
-                        await this.addFirework(
-                            centerX,
-                            canvas.height,
-                            centerX + Math.cos(angle) * radius,
-                            canvas.height * 0.3 + Math.sin(angle) * radius * 0.5,
-                            i * 0.2
-                        );
-                    }
-                }
-
-                // Cảnh 6: Kết thúc hoành tráng
-                const finalPromises3 = [];
-                this.setEffectType('phoenix');
-                finalPromises3.push(this.addFirework(centerX, canvas.height, centerX, canvas.height * 0.25, 0));
-                this.setEffectType('spiral');
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i / 6) * Math.PI * 2;
-                    finalPromises3.push(this.addFirework(
-                        centerX + Math.cos(angle) * 150,
+                    const x = centerX - spread * 0.6 + i * (spread * 0.4);
+                    dragonPromises2.push(this.addFirework(
+                        x,
                         canvas.height,
-                        centerX + Math.cos(angle) * 150,
-                        canvas.height * 0.4,
+                        x,
+                        height - 250 - i * 30,
                         i * 0.2
                     ));
                 }
-                await Promise.all(finalPromises3);
+                this.setEffectType('galaxy');
+                dragonPromises2.push(this.addFirework(centerX, canvas.height, centerX, height - 400, 0.6));
+                await Promise.all(dragonPromises2);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Kết thúc với vòng xoáy rồng
+                const dragonFinalPromises = [];
+                this.setEffectType('phoenix');
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const radius = spread * 0.5;
+                    dragonFinalPromises.push(this.addFirework(
+                        centerX + Math.cos(angle) * radius,
+                        canvas.height,
+                        centerX + Math.cos(angle) * radius,
+                        height - 350 + Math.sin(angle) * 100,
+                        i * 0.15
+                    ));
+                }
+                await Promise.all(dragonFinalPromises);
+                break;
+
+            case 4: // Kịch bản 4: Rainbow Symphony
+                // Mở đầu với vòng cung cầu vồng
+                this.setEffectType('star');
+                const rainbowColors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+                for (let i = 0; i < 6; i++) {
+                    const x = centerX - spread + (i * spread/3);
+                    await this.addFirework(x, canvas.height, x, height - 200 - Math.sin(i) * 100, i * 0.2);
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng xoắn ốc đa màu
+                const spiralPromises = [];
+                this.setEffectType('spiral');
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    const radius = 200;
+                    spiralPromises.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * radius,
+                        height - 350 + Math.sin(angle) * 50,
+                        i * 0.1
+                    ));
+                }
+                await Promise.all(spiralPromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng hoa và bướm hòa quyện
+                const blendPromises = [];
+                this.setEffectType('flower');
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2;
+                    blendPromises.push(this.addFirework(
+                        centerX + Math.cos(angle) * spread * 0.4,
+                        canvas.height,
+                        centerX + Math.cos(angle) * spread * 0.4,
+                        height - 300,
+                        i * 0.2
+                    ));
+                }
+                this.setEffectType('butterfly');
+                blendPromises.push(this.addFirework(centerX - spread * 0.3, canvas.height, centerX - spread * 0.3, height - 400, 0.8));
+                blendPromises.push(this.addFirework(centerX + spread * 0.3, canvas.height, centerX + spread * 0.3, height - 400, 0.8));
+                await Promise.all(blendPromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Màn kết thúc hoành tráng
+                const finalePromises = [];
+                this.setEffectType('galaxy');
+                for (let i = 0; i < 3; i++) {
+                    const height_offset = i * 50;
+                    finalePromises.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX,
+                        height - 450 + height_offset,
+                        i * 0.3
+                    ));
+                }
+                
+                this.setEffectType('rain');
+                for (let i = 0; i < 5; i++) {
+                    const x = centerX - spread * 0.8 + i * (spread * 0.4);
+                    finalePromises.push(this.addFirework(
+                        x,
+                        canvas.height,
+                        x,
+                        height - 350 - Math.sin(i) * 50,
+                        1 + i * 0.1
+                    ));
+                }
+                await Promise.all(finalePromises);
+                break;
+
+            case 5: // Starry Night Fantasy
+                // Mở đầu với bầu trời sao
+                this.setEffectType('star');
+                for (let i = 0; i < 8; i++) {
+                    const x = centerX - spread + (i * spread/4);
+                    const y = height - webRandom.randomFloat(300, 500);
+                    await this.addFirework(x, canvas.height, x, y, i * 0.15);
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng sao băng
+                const meteorPromises = [];
+                this.setEffectType('rain');
+                for (let i = 0; i < 5; i++) {
+                    const startX = centerX - spread + (i * spread/2);
+                    const endX = startX + spread/3;
+                    meteorPromises.push(this.addFirework(
+                        startX,
+                        height - 200,
+                        endX,
+                        height - 400,
+                        i * 0.2
+                    ));
+                }
+                await Promise.all(meteorPromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng thiên hà xoáy
+                const galaxyPromises = [];
+                this.setEffectType('galaxy');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 6; j++) {
+                        const angle = (j / 6) * Math.PI * 2;
+                        const radius = 150 + i * 50;
+                        galaxyPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * 50,
+                            i * 0.3 + j * 0.1
+                        ));
+                    }
+                }
+                await Promise.all(galaxyPromises);
+                break;
+
+            case 6: // Crystal Cascade
+                // Mở đầu với thác nước pha lê
+                this.setEffectType('rain');
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const x = centerX - spread/2 + i * (spread/4);
+                        await this.addFirework(
+                            x,
+                            canvas.height,
+                            x,
+                            height - 200 - j * 100,
+                            i * 0.1 + j * 0.2
+                        );
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng pha lê vỡ
+                const crystalPromises = [];
+                this.setEffectType('star');
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2;
+                    for (let j = 0; j < 3; j++) {
+                        const radius = 100 + j * 50;
+                        crystalPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 300 + Math.sin(angle) * radius/2,
+                            i * 0.2
+                        ));
+                    }
+                }
+                await Promise.all(crystalPromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Kết thúc với vụ nổ pha lê
+                const finalCrystalPromises = [];
+                this.setEffectType('circle');
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    finalCrystalPromises.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * spread * 0.4,
+                        height - 350,
+                        i * 0.1
+                    ));
+                }
+                await Promise.all(finalCrystalPromises);
+                break;
+
+            case 7: // Phoenix Rising
+                // Mở đầu với phượng hoàng đơn độc
+                this.setEffectType('phoenix');
+                await this.addFirework(centerX, canvas.height, centerX, height - 300, 0);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Hiệu ứng cánh phượng hoàng
+                const wingPromises = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 3; i++) {
+                    const offset = spread * 0.2 * (i + 1);
+                    wingPromises.push(this.addFirework(
+                        centerX - offset,
+                        canvas.height,
+                        centerX - offset,
+                        height - 350,
+                        i * 0.2
+                    ));
+                    wingPromises.push(this.addFirework(
+                        centerX + offset,
+                        canvas.height,
+                        centerX + offset,
+                        height - 350,
+                        i * 0.2
+                    ));
+                }
+                await Promise.all(wingPromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Hiệu ứng lửa bùng cháy
+                const firePromises = [];
+                this.setEffectType('spiral');
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    firePromises.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * spread * 0.5,
+                        height - 400 + Math.sin(angle) * 100,
+                        i * 0.1
+                    ));
+                }
+                await Promise.all(firePromises);
+                break;
+
+            case 8: // Ocean Dreams
+                // Mở đầu với sóng biển
+                this.setEffectType('rain');
+                for (let i = 0; i < 3; i++) {
+                    const wavePromises = [];
+                    for (let j = 0; j < 5; j++) {
+                        const x = centerX - spread/2 + j * (spread/4);
+                        wavePromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x,
+                            height - 200 - Math.sin(j) * 50 - i * 70,
+                            j * 0.1
+                        ));
+                    }
+                    await Promise.all(wavePromises);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                // Hiệu ứng bong bóng
+                const bubblePromises = [];
+                this.setEffectType('circle');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const angle = (i / 4) * Math.PI * 2;
+                        const radius = 100 + j * 60;
+                        bubblePromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius * 0.3,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius * 0.3,
+                            height - 250 - j * 80,
+                            i * 0.2 + j * 0.1
+                        ));
+                    }
+                }
+                await Promise.all(bubblePromises);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Kết thúc với đàn cá heo
+                const dolphinPromises = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 5; i++) {
+                    const startX = centerX - spread/2 + i * (spread/4);
+                    const endX = startX + spread/8;
+                    dolphinPromises.push(this.addFirework(
+                        startX,
+                        canvas.height,
+                        endX,
+                        height - 300 - Math.sin(i) * 100,
+                        i * 0.15
+                    ));
+                }
+                await Promise.all(dolphinPromises);
+                break;
+
+            case 9: // Garden of Light
+                // Phần 1: Khu vườn thức giấc
+                this.setEffectType('rain');
+                for (let i = 0; i < 5; i++) {
+                    const morningDewPromises = [];
+                    for (let j = 0; j < 4; j++) {
+                        const x = centerX - spread/2 + i * (spread/4);
+                        morningDewPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.sin(j) * 30,
+                            height - 200 - j * 80,
+                            j * 0.15
+                        ));
+                    }
+                    await Promise.all(morningDewPromises);
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
+
+                // Phần 2: Hoa nở rộ
+                this.setEffectType('flower');
+                for (let i = 0; i < 3; i++) {
+                    const flowerLayerPromises = [];
+                    for (let j = 0; j < 5; j++) {
+                        const angle = (j / 5) * Math.PI * 2;
+                        const radius = 150 + i * 50;
+                        flowerLayerPromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius * 0.3,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 300 - i * 50,
+                            j * 0.2
+                        ));
+                    }
+                    await Promise.all(flowerLayerPromises);
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+
+                // Phần 3: Bướm xuất hiện
+                const butterflyWaves = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const startX = centerX - spread/2 + i * (spread/3);
+                        const endX = startX + Math.sin(j) * 100;
+                        butterflyWaves.push(this.addFirework(
+                            startX,
+                            canvas.height,
+                            endX,
+                            height - 250 - j * 100,
+                            i * 0.15 + j * 0.2
+                        ));
+                    }
+                }
+                await Promise.all(butterflyWaves);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Phần 4: Vũ điệu của ánh sáng
+                const lightDancePromises = [];
+                this.setEffectType('star');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const angle = (j / 8) * Math.PI * 2;
+                        const radius = 180 - i * 30;
+                        lightDancePromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius,
+                            canvas.height,
+                            centerX + Math.cos(angle) * (radius + 50),
+                            height - 300 + Math.sin(angle) * 50,
+                            j * 0.1 + i * 0.2
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                await Promise.all(lightDancePromises);
+
+                // Phần 5: Cầu vồng kết hợp
+                const rainbowLayersPromises = [];
+                this.setEffectType('circle');
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 7; j++) {
+                        const x = centerX - spread/2 + j * (spread/6);
+                        const y = height - 200 - i * 60 - Math.sin(j) * 40;
+                        rainbowLayersPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x,
+                            y,
+                            j * 0.1 + i * 0.15
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                await Promise.all(rainbowLayersPromises);
+
+                // Phần 6: Màn kết thúc hoành tráng
+                const grandeFinalePromises = [];
+                this.setEffectType('galaxy');
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    const radius = 200;
+                    grandeFinalePromises.push(this.addFirework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * radius,
+                        height - 350 + Math.sin(angle) * radius/2,
+                        i * 0.08
+                    ));
+                }
+                await Promise.all(grandeFinalePromises);
+                break;
+
+            case 10: // Dragon Dance
+                // Phần 1: Khởi động với đốm lửa
+                this.setEffectType('star');
+                for (let i = 0; i < 6; i++) {
+                    const sparkPromises = [];
+                    for (let j = 0; j < 4; j++) {
+                        const x = centerX - spread/2 + i * (spread/5);
+                        sparkPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.sin(j) * 50,
+                            height - 200 - j * 60,
+                            j * 0.1
+                        ));
+                    }
+                    await Promise.all(sparkPromises);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                // Phần 2: Thân rồng uốn lượn
+                this.setEffectType('spiral');
+                for (let i = 0; i < 3; i++) {
+                    const dragonBodyPromises = [];
+                    for (let j = 0; j < 8; j++) {
+                        const x = centerX - spread/2 + j * (spread/7);
+                        const y = height - 300 + Math.sin(j + i) * 100;
+                        dragonBodyPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.cos(i) * 30,
+                            y,
+                            j * 0.12
+                        ));
+                    }
+                    await Promise.all(dragonBodyPromises);
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+
+                // Phần 3: Cánh rồng mở rộng
+                const wingExpansionPromises = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 6; j++) {
+                        const angle = (j / 6) * Math.PI;
+                        const radius = 150 + i * 40;
+                        wingExpansionPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * radius/2,
+                            i * 0.15 + j * 0.1
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                await Promise.all(wingExpansionPromises);
+
+                // Phần 4: Rồng bay lên trời
+                const ascensionPromises = [];
+                this.setEffectType('phoenix');
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        const startX = centerX - spread/3 + i * (spread/4);
+                        const endX = startX + spread/5;
+                        ascensionPromises.push(this.addFirework(
+                            startX,
+                            height - 200 - i * 50,
+                            endX,
+                            height - 400 - i * 60,
+                            j * 0.2
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 700));
+                }
+                await Promise.all(ascensionPromises);
+
+                // Phần 5: Lửa rồng phun
+                const firebreathPromises = [];
+                this.setEffectType('rain');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        const angle = (j / 10) * Math.PI / 2 - Math.PI/4;
+                        const radius = 200 + i * 50;
+                        firebreathPromises.push(this.addFirework(
+                            centerX,
+                            height - 350,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * radius,
+                            j * 0.08 + i * 0.2
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                await Promise.all(firebreathPromises);
+
+                // Phần 6: Màn kết với vòng xoáy lửa
+                const fireVortexPromises = [];
+                this.setEffectType('circle');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 12; j++) {
+                        const angle = (j / 12) * Math.PI * 2;
+                        const radius = 180 - i * 30;
+                        fireVortexPromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius,
+                            canvas.height,
+                            centerX + Math.cos(angle) * (radius - 50),
+                            height - 350 + Math.sin(angle) * 50,
+                            j * 0.1
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                await Promise.all(fireVortexPromises);
+                break;
+
+            case 11: // Aurora Borealis
+                // Phần 1: Bình minh phương Bắc
+                this.setEffectType('rain');
+                for (let i = 0; i < 4; i++) {
+                    const dawnPromises = [];
+                    for (let j = 0; j < 8; j++) {
+                        const x = centerX - spread/2 + j * (spread/7);
+                        dawnPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.sin(i) * 30,
+                            height - 200 - Math.sin(j) * 80 - i * 40,
+                            j * 0.08
+                        ));
+                    }
+                    await Promise.all(dawnPromises);
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+
+                // Phần 2: Màn sáng đầu tiên
+                const firstCurtainPromises = [];
+                this.setEffectType('star');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        const x = centerX - spread/2 + j * (spread/9);
+                        firstCurtainPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.cos(i) * 40,
+                            height - 250 - i * 60 - Math.sin(j) * 50,
+                            j * 0.1 + i * 0.15
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                await Promise.all(firstCurtainPromises);
+
+                // Phần 3: Sóng ánh sáng chuyển động
+                const wavesPromises = [];
+                this.setEffectType('butterfly');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 6; j++) {
+                        const x = centerX - spread/2 + j * (spread/5);
+                        const y = height - 300 - Math.sin(i + j) * 100;
+                        wavesPromises.push(this.addFirework(
+                            x,
+                            canvas.height,
+                            x + Math.cos(i) * 60,
+                            y,
+                            i * 0.2 + j * 0.1
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 700));
+                }
+                await Promise.all(wavesPromises);
+
+                // Phần 4: Xoáy cực quang
+                const vortexPromises = [];
+                this.setEffectType('spiral');
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const angle = (j / 8) * Math.PI * 2;
+                        const radius = 150 - i * 20;
+                        vortexPromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius,
+                            canvas.height,
+                            centerX + Math.cos(angle) * (radius + 40),
+                            height - 350 + Math.sin(angle) * 60,
+                            j * 0.12
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                await Promise.all(vortexPromises);
+
+                // Phần 5: Mưa sao băng
+                const auroraMeteorites = [];
+                this.setEffectType('rain');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 12; j++) {
+                        const startX = centerX - spread + j * (spread/6);
+                        const endX = startX + spread/4;
+                        auroraMeteorites.push(this.addFirework(
+                            startX,
+                            height - 200 - i * 100,
+                            endX,
+                            height - 400 - i * 100,
+                            j * 0.1 + i * 0.2
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+                await Promise.all(auroraMeteorites);
+
+                // Phần 6: Màn kết thúc hoành tráng
+                const finalDancePromises = [];
+                this.setEffectType('galaxy');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        const angle = (j / 10) * Math.PI * 2;
+                        const radius = 200 - i * 30;
+                        finalDancePromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * radius/2,
+                            j * 0.08 + i * 0.15
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                await Promise.all(finalDancePromises);
+                break;
+
+            case 12: // Cosmic Journey
+                // Phần 1: Khởi đầu vũ trụ
+                this.setEffectType('star');
+                for (let i = 0; i < 5; i++) {
+                    const startPromises = [];
+                    for (let j = 0; j < 6; j++) {
+                        const angle = (j / 6) * Math.PI * 2;
+                        const radius = 100 + i * 40;
+                        startPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 300 + Math.sin(angle) * radius/2,
+                            j * 0.15
+                        ));
+                    }
+                    await Promise.all(startPromises);
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+
+                // Phần 2: Thiên hà xoáy
+                const galaxySpinPromises = [];
+                this.setEffectType('galaxy');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const angle = (j / 8) * Math.PI * 2 + i * Math.PI/4;
+                        const radius = 150 + i * 30;
+                        galaxySpinPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * radius/2,
+                            j * 0.1 + i * 0.15
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 700));
+                }
+                await Promise.all(galaxySpinPromises);
+
+                // Phần 3: Vũ điệu của các hành tinh
+                const planetDancePromises = [];
+                this.setEffectType('circle');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const angle = (j / 8) * Math.PI * 2;
+                        for (let k = 0; k < 3; k++) {
+                            const radius = 120 + k * 60;
+                            planetDancePromises.push(this.addFirework(
+                                centerX + Math.cos(angle + i) * radius,
+                                canvas.height,
+                                centerX + Math.cos(angle + i + Math.PI/4) * radius,
+                                height - 300 + Math.sin(angle) * 50,
+                                j * 0.1 + k * 0.15
+                            ));
+                        }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+                await Promise.all(planetDancePromises);
+
+                // Phần 4: Hố đen vũ trụ
+                const blackHolePromises = [];
+                this.setEffectType('spiral');
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 12; j++) {
+                        const angle = (j / 12) * Math.PI * 2;
+                        const radius = 200 - i * 35;
+                        blackHolePromises.push(this.addFirework(
+                            centerX + Math.cos(angle) * radius,
+                            canvas.height,
+                            centerX,
+                            height - 350,
+                            j * 0.08 + i * 0.1
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                await Promise.all(blackHolePromises);
+
+                // Phần 5: Sao băng vũ trụ
+                const cosmicMeteorPromises = [];
+                this.setEffectType('rain');
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 6; j++) {
+                        const startX = centerX - spread/2 + j * spread/5;
+                        const startY = height - 400 + i * 50;
+                        cosmicMeteorPromises.push(this.addFirework(
+                            startX,
+                            startY,
+                            startX + spread/4,
+                            startY + 200,
+                            j * 0.15 + i * 0.2
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                await Promise.all(cosmicMeteorPromises);
+
+                // Phần 6: Vụ nổ Big Bang
+                const bigBangPromises = [];
+                this.setEffectType('flower');
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 15; j++) {
+                        const angle = (j / 15) * Math.PI * 2;
+                        const radius = 150 + i * 50;
+                        bigBangPromises.push(this.addFirework(
+                            centerX,
+                            canvas.height,
+                            centerX + Math.cos(angle) * radius,
+                            height - 350 + Math.sin(angle) * radius/2,
+                            j * 0.05 + i * 0.1
+                        ));
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
+                await Promise.all(bigBangPromises);
                 break;
         }
+        
         this.isPlaying = false;
     }
 
@@ -609,7 +1264,7 @@ class FireworkShow {
         const spread = canvas.width * this.options.spread;
         const delay = this.options.delay;
 
-        // Hiệu ứng kết hợp xoắn ốc và phượng hoàng - nâng cao hơn
+        // Hiệu ứng kết hợp xoắn ốc và phượng hoàng
         const promises1 = [];
         this.setEffectType('spiral');
         for (let i = 0; i < 4; i++) {
@@ -618,15 +1273,15 @@ class FireworkShow {
                 centerX,
                 canvas.height,
                 centerX + Math.cos(angle) * spread * 0.6,
-                height - 250, // Tăng độ cao
+                height - 250,
                 delay
             ));
         }
         this.setEffectType('phoenix');
-        promises1.push(this.addFirework(centerX, canvas.height, centerX, height - 300, delay)); // Tăng độ cao
+        promises1.push(this.addFirework(centerX, canvas.height, centerX, height - 300, delay));
         await Promise.all(promises1);
 
-        // Hiệu ứng kết hợp hoa và trái tim - nâng cao hơn
+        // Hiệu ứng kết hợp hoa và trái tim
         const promises2 = [];
         this.setEffectType('flower');
         for (let i = 0; i < 3; i++) {
@@ -635,35 +1290,35 @@ class FireworkShow {
                 centerX + Math.cos(angle) * spread * 0.5,
                 canvas.height,
                 centerX + Math.cos(angle) * spread * 0.5,
-                height - 200, // Tăng độ cao
+                height - 200,
                 delay
             ));
         }
         this.setEffectType('heart');
-        promises2.push(this.addFirework(centerX, canvas.height, centerX, height - 280, delay)); // Tăng độ cao cho trái tim
+        promises2.push(this.addFirework(centerX, canvas.height, centerX, height - 280, delay));
         await Promise.all(promises2);
 
-        // Hiệu ứng kết hợp sao và vòng tròn - đa tầng
+        // Hiệu ứng kết hợp sao và vòng tròn
         const promises3 = [];
         this.setEffectType('star');
         for (let i = 0; i < 5; i++) {
             const x = centerX - spread * 0.8 + i * (spread * 0.4);
-            const randomHeight = height - webRandom.randomFloat(200, 350); // Tăng phạm vi độ cao
+            const randomHeight = height - webRandom.randomFloat(200, 350);
             promises3.push(this.addFirework(x, canvas.height, x, randomHeight, delay));
         }
         this.setEffectType('circle');
-        promises3.push(this.addFirework(centerX, canvas.height, centerX, height - 300, delay)); // Tăng độ cao
+        promises3.push(this.addFirework(centerX, canvas.height, centerX, height - 300, delay));
         await Promise.all(promises3);
     }
 
     async createGrandFinaleScene(centerX, centerY) {
         const height = canvas.height * this.options.height;
         const spread = canvas.width * this.options.spread;
-        const delay = this.options.delay * 0.7; // Nhanh hơn cho màn kết thúc
+        const delay = this.options.delay * 0.7;
 
         const promises = [];
         
-        // Vòng 1: Circle + Star - Tăng độ cao
+        // Vòng 1: Circle + Star
         this.setEffectType('circle');
         for (let i = 0; i < 6; i++) {
             const angle = (i / 6) * Math.PI * 2;
@@ -671,7 +1326,7 @@ class FireworkShow {
                 centerX,
                 canvas.height,
                 centerX + Math.cos(angle) * spread * 0.8,
-                height - 300, // Tăng độ cao
+                height - 300,
                 delay
             ));
         }
@@ -682,12 +1337,12 @@ class FireworkShow {
                 centerX,
                 canvas.height,
                 centerX + Math.cos(angle) * spread * 0.4,
-                height - 350, // Tăng độ cao
+                height - 350,
                 delay
             ));
         }
 
-        // Vòng 2: Heart + Phoenix - Tăng độ cao đáng kể
+        // Vòng 2: Heart + Phoenix
         this.setEffectType('heart');
         promises.push(this.addFirework(centerX - spread * 0.3, canvas.height, centerX - spread * 0.3, height - 400, delay));
         promises.push(this.addFirework(centerX + spread * 0.3, canvas.height, centerX + spread * 0.3, height - 400, delay));
@@ -695,7 +1350,7 @@ class FireworkShow {
         this.setEffectType('phoenix');
         promises.push(this.addFirework(centerX, canvas.height, centerX, height - 450, delay));
 
-        // Vòng 3: Galaxy + Rain + Butterfly - Đa tầng
+        // Vòng 3: Galaxy + Rain + Butterfly
         this.setEffectType('galaxy');
         for (let i = 0; i < 3; i++) {
             const x = centerX - spread * 0.4 + i * spread * 0.4;
@@ -705,7 +1360,7 @@ class FireworkShow {
         this.setEffectType('rain');
         for (let i = 0; i < 5; i++) {
             const x = centerX - spread * 0.8 + i * spread * 0.4;
-            const randomHeight = height - webRandom.randomFloat(350, 450); // Tăng phạm vi độ cao
+            const randomHeight = height - webRandom.randomFloat(350, 450);
             promises.push(this.addFirework(x, canvas.height, x, randomHeight, delay));
         }
 
@@ -725,7 +1380,7 @@ class FireworkShow {
         // Hiệu ứng bầu trời sao
         this.setEffectType('star');
         for (let i = 0; i < 5; i++) {
-            const x = centerX - spread + i * (spread * 0.5);
+            const x = centerX - spread + (i * spread/3);
             const y = height - webRandom.randomFloat(300, 500);
             promises.push(this.addFirework(x, canvas.height, x, y, delay));
         }
@@ -910,6 +1565,62 @@ class FireworkShow {
     async switchChoreography(number) {
         this.currentChoreography = number;
         await this.createChoreography();
+    }
+
+    async rainbowSymphony() {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = 100;
+        
+        // Tạo hiệu ứng cầu vồng
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI;
+            const x = centerX + Math.cos(angle) * scale * 2;
+            const y = centerY - Math.sin(angle) * scale;
+            
+            setTimeout(() => {
+                const fw = new Firework(
+                    centerX,
+                    canvas.height,
+                    x,
+                    y
+                );
+                this.addFirework(fw);
+            }, i * 200);
+        }
+
+        // Thêm hiệu ứng xoắn ốc sau 1.5s
+        setTimeout(() => {
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                setTimeout(() => {
+                    const fw = new Firework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * scale * 2,
+                        centerY + Math.sin(angle) * scale
+                    );
+                    this.addFirework(fw);
+                }, i * 150);
+            }
+        }, 1500);
+
+        // Kết thúc với hiệu ứng bung tỏa
+        setTimeout(() => {
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const radius = 200;
+                setTimeout(() => {
+                    const fw = new Firework(
+                        centerX,
+                        canvas.height,
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius * 0.8
+                    );
+                    this.addFirework(fw);
+                }, i * 100);
+            }
+        }, 3000);
     }
 }
 

@@ -77,6 +77,12 @@ class Firework {
         this.particleSize = 2;   // Kích thước hạt
         this.particleSpeed = 1;  // Tốc độ hạt
         this.effectDuration = 1; // Thời gian hiệu ứng (giây)
+
+        // Add label properties
+        this.showLabel = false;
+        this.labelAlpha = 1;
+        this.labelDuration = 2000; // 2 seconds
+        this.labelStartTime = 0;
     }
 
     // Điều chỉnh số lượng hạt
@@ -127,7 +133,7 @@ class Firework {
         return this;
     }
 
-    // Thiết lập tất cả thông số cùng lúc
+    // Thiết lập nhiều thông số cùng lúc
     setProperties({
         particleCount,
         particleSize,
@@ -266,81 +272,123 @@ class Firework {
         }
 
         this.particles.forEach(particle => particle.draw());
+
+        // Draw label if needed
+        if (this.showLabel && this.labelAlpha > 0) {
+            const timePassed = Date.now() - this.labelStartTime;
+            if (timePassed < this.labelDuration) {
+                this.labelAlpha = 1 - (timePassed / this.labelDuration);
+                ctx.save();
+                ctx.font = '20px Arial';
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.labelAlpha})`;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.effectType.toUpperCase(), this.targetX, this.targetY - 30);
+                ctx.restore();
+            }
+        }
     }
 
     explode() {
-        playSound(0.3);
+        if (this.exploded) return;
         
-        // Danh sách các hiệu ứng có sẵn
+        this.exploded = true;
+        const particleCount = this.isRecursive ? 30 : 100;
+        this.labelStartTime = Date.now();
+        
+        // Danh sách hiệu ứng có sẵn
         const effects = [
-            'normal',     // Nổ đều các hướng
-            'spiral',     // Xoắn ốc
-            'heart',      // Hình trái tim
-            'star',       // Hình ngôi sao
-            'circle',     // Vòng tròn đồng tâm
-            'rain',       // Mưa sao
-            'phoenix',    // Chim phượng hoàng
-            'butterfly',  // Hình bướm
-            'flower',     // Hình hoa
-            'galaxy'      // Thiên hà
+            'normal',
+            'spiral',
+            'heart',
+            'star',
+            'circle',
+            'burst',
+            'dna',
+            'butterfly',
+            'galaxy',
+            'willow',
+            'palm',
+            'dahlia',
+            'waterfall',
+            'phoenix'
         ];
-
-        // Luôn random hiệu ứng, bỏ qua effectType đã set
-        const selectedEffect = effects[webRandom.randomInt(0, effects.length - 1)];
         
-        // Số lượng hạt mặc định nếu không được chỉ định
-        this.particleCount = this.particleCount || (this.isRecursive ? 10 : 50);
+        // Chọn ngẫu nhiên một hiệu ứng
+        const selectedEffect = effects[Math.floor(Math.random() * effects.length)];
+        this.effectType = selectedEffect;
         
-        switch(selectedEffect) {
+        // Tạo hiệu ứng tương ứng
+        switch (selectedEffect) {
+            case 'normal':
+                this.createNormalEffect(particleCount);
+                break;
             case 'spiral':
-                this.createSpiralEffect(this.particleCount);
+                this.createSpiralEffect(particleCount);
                 break;
             case 'heart':
-                this.createHeartEffect(this.particleCount);
+                this.createHeartEffect(particleCount);
                 break;
             case 'star':
-                this.createStarEffect(this.particleCount);
+                this.createStarEffect(particleCount);
                 break;
             case 'circle':
-                this.createCircleEffect(this.particleCount);
+                this.createCircleEffect(particleCount);
                 break;
-            case 'rain':
-                this.createRainEffect(this.particleCount);
+            case 'burst':
+                this.createBurstEffect(particleCount);
                 break;
-            case 'phoenix':
-                this.createPhoenixEffect(this.particleCount);
+            case 'dna':
+                this.createDNAEffect(particleCount);
                 break;
             case 'butterfly':
-                this.createButterflyEffect(this.particleCount);
-                break;
-            case 'flower':
-                this.createFlowerEffect(this.particleCount);
+                this.createButterflyEffect(particleCount);
                 break;
             case 'galaxy':
-                this.createGalaxyEffect(this.particleCount);
+                this.createGalaxyEffect(particleCount);
                 break;
-            default:
-                this.createNormalEffect(this.particleCount);
+            case 'willow':
+                this.createWillowEffect(particleCount);
+                break;
+            case 'palm':
+                this.createPalmEffect(particleCount);
+                break;
+            case 'dahlia':
+                this.createDahliaEffect(particleCount * 1.2);
+                break;
+            case 'waterfall':
+                this.createWaterfallEffect(particleCount);
+                break;
+            case 'phoenix':
+                this.createPhoenixEffect(particleCount);
+                break;
+        }
+        
+        // Play explosion sound
+        playSound('explosion');
+        
+        // Tạo hiệu ứng phụ nếu là pháo hoa chính
+        if (!this.isRecursive && Math.random() < 0.3) {
+            this.createSecondaryExplosions();
         }
     }
 
     createNormalEffect(particleCount) {
         const angleStep = (Math.PI * 2) / particleCount;
-        const types = ['circle', 'heart', 'star'];
+        const types = ['circle', 'star'];
         const type = types[webRandom.randomInt(0, types.length - 1)];
 
-        // Main burst - increased velocity range
         for (let i = 0; i < particleCount; i++) {
-            const velocity = webRandom.randomFloat(4, 7);  // Increased from 3-6
+            const velocity = webRandom.randomFloat(4, 7);
             const angle = angleStep * i + webRandom.randomFloat(-0.15, 0.15);
-            
+            const hueVariation = webRandom.randomFloat(-20, 20);
+
             this.particles.push(
                 new Particle(
                     this.x,
                     this.y,
                     Math.cos(angle) * velocity,
                     Math.sin(angle) * velocity,
-                    this.hue,
+                    (this.hue + hueVariation) % 360,
                     type,
                     0,
                     this.isRecursive
@@ -348,13 +396,11 @@ class Firework {
             );
         }
 
-        // Inner ring - reduced count but increased velocity
-        const innerCount = particleCount * 0.4;  // Reduced from 0.5
-        const innerAngleStep = (Math.PI * 2) / innerCount;
-        for (let i = 0; i < innerCount; i++) {
-            const velocity = webRandom.randomFloat(2, 4);  // Increased from 1.5-3
-            const angle = innerAngleStep * i;
-            const delay = 0.15;  // Reduced from 0.2
+        // Thêm các particle phụ để tạo hiệu ứng lấp lánh
+        const sparkCount = particleCount * 0.5;
+        for (let i = 0; i < sparkCount; i++) {
+            const angle = webRandom.randomFloat(0, Math.PI * 2);
+            const velocity = webRandom.randomFloat(2, 4);
             
             this.particles.push(
                 new Particle(
@@ -362,335 +408,532 @@ class Firework {
                     this.y,
                     Math.cos(angle) * velocity,
                     Math.sin(angle) * velocity,
-                    (this.hue + 30) % 360,
-                    'circle',
+                    (this.hue + webRandom.randomFloat(-30, 30)) % 360,
+                    'star',
                     0,
-                    false,
-                    delay
+                    this.isRecursive,
+                    webRandom.randomFloat(0, 0.3)
                 )
             );
-        }
-
-        // Rays - increased length and velocity
-        const rayCount = 16;  // Increased from 12
-        const rayAngleStep = (Math.PI * 2) / rayCount;
-        for (let i = 0; i < rayCount; i++) {
-            const velocity = webRandom.randomFloat(8, 10);  // Increased from 7-9
-            const angle = rayAngleStep * i;
-            const delay = 0.08;  // Reduced from 0.1
-            
-            for (let j = 0; j < 4; j++) {  // Increased from 3
-                const particleDelay = delay + j * 0.04;  // Reduced from 0.05
-                const particleVelocity = velocity * (1 - j * 0.15);  // Reduced decay
-                
-                this.particles.push(
-                    new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle) * particleVelocity,
-                        Math.sin(angle) * particleVelocity,
-                        (this.hue + 60) % 360,
-                        'star',
-                        0,
-                        false,
-                        particleDelay
-                    )
-                );
-            }
         }
     }
 
     createSpiralEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const numSpirals = webRandom.randomInt(4, 6);  // Increased from 3-5
-        const numArms = webRandom.randomInt(3, 5);     // Increased from 2-4
-        
-        // Main spiral arms - increased velocity and reduced spread
-        for (let arm = 0; arm < numArms; arm++) {
-            const armOffset = (Math.PI * 2 * arm) / numArms;
-            
-            for (let i = 0; i < particleCount / numArms; i++) {
-                const progress = i / (particleCount / numArms);
-                const angle = progress * Math.PI * numSpirals * 2 + armOffset;
-                const baseVelocity = 9 - progress * 3;  // Increased from 8
-                
-                for (let j = 0; j < 3; j++) {
-                    const spread = webRandom.randomFloat(-0.15, 0.15);  // Reduced from -0.2,0.2
-                    const velocityVar = webRandom.randomFloat(-0.4, 0.4);  // Reduced from -0.5,0.5
-                    
-                    this.particles.push(
-                        new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(angle + spread) * (baseVelocity + velocityVar),
-                            Math.sin(angle + spread) * (baseVelocity + velocityVar),
-                            (this.hue + progress * 40) % 360,  // Increased color variation
-                            type,
-                            0,
-                            this.isRecursive,
-                            j * 0.015  // Reduced from 0.02
-                        )
-                    );
-                }
-            }
-        }
-        
-        // Inner ring - reduced count but increased velocity
-        const ringCount = 3;
-        for (let ring = 0; ring < ringCount; ring++) {
-            const radius = 3 + ring * 2;
-            const ringParticles = Math.floor(particleCount / 3);
-            const angleStep = (Math.PI * 2) / ringParticles;
-            const rotationSpeed = (ring % 2 === 0 ? 1 : -1) * 0.02;
-            
-            for (let i = 0; i < ringParticles; i++) {
-                const angle = angleStep * i;
-                const delay = 0.3 + ring * 0.1;
-                
-                this.particles.push(
-                    new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle) * radius + Math.sin(angle) * rotationSpeed,
-                        Math.sin(angle) * radius - Math.cos(angle) * rotationSpeed,
-                        (this.hue + ring * 40) % 360,
-                        'circle',
-                        0,
-                        false,
-                        delay
-                    )
-                );
-            }
-        }
-        
-        // Final burst - increased velocity and reduced delay
-        const finalBurstCount = particleCount * 0.3;
-        const burstDelay = 0.4;  // Reduced from 0.5
-        for (let i = 0; i < finalBurstCount; i++) {
-            const angle = (i / finalBurstCount) * Math.PI * 2;
-            const velocity = webRandom.randomFloat(7, 9);  // Increased from 6-8
-            
+        particleCount = this.getParticleCount(particleCount);
+        const spirals = 3;  // Số đường xoắn
+        const rotations = 3;  // Số vòng xoắn
+        const particlesPerSpiral = Math.floor(particleCount / spirals);
+
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 50;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 4 + Math.random() * 2;
+            const hue = (this.hue + i * (360 / burstParticles)) % 360;  // Màu sắc cầu vồng
             this.particles.push(
                 new Particle(
-                    this.x,
-                    this.y,
+                    this.targetX,
+                    this.targetY,
                     Math.cos(angle) * velocity,
                     Math.sin(angle) * velocity,
-                    (this.hue + 120) % 360,
+                    hue,
                     'star',
                     0,
                     false,
-                    burstDelay
+                    0.9
                 )
             );
         }
-    }
 
-    createRippleEffect(particleCount) {
-        const rings = 5;
-        const particlesPerRing = Math.floor(particleCount / rings);
-        const types = ['circle', 'star'];
-        const velocityStep = 1.2;
-        
-        for (let ring = 0; ring < rings; ring++) {
-            const velocity = 3 + ring * velocityStep;
-            const angleStep = (Math.PI * 2) / particlesPerRing;
-            const type = types[webRandom.randomInt(0, types.length - 1)];
-            const ringHue = (this.hue + ring * 25) % 360;
-            
-            for (let i = 0; i < particlesPerRing; i++) {
-                const angle = angleStep * i;
-                const delay = ring * 0.06;
-                
-                const clusterSize = ring === 0 ? 4 : 3;
-                for (let j = 0; j < clusterSize; j++) {
-                    const spread = webRandom.randomFloat(-0.15, 0.15);
-                    const velocityVar = webRandom.randomFloat(-0.3, 0.3);
-                    
+        // Tạo vòng sáng nhiều màu
+        const ringParticles = 40;
+        for (let i = 0; i < ringParticles; i++) {
+            const angle = (i / ringParticles) * Math.PI * 2;
+            const velocity = 2;
+            const hue = (this.hue + 180 + i * (360 / ringParticles)) % 360;  // Màu đối lập
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    hue,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+
+        // Tạo các đường xoắn ốc
+        for (let spiral = 0; spiral < spirals; spiral++) {
+            const spiralHueBase = (this.hue + (360 / spirals) * spiral) % 360;  // Màu cơ bản cho mỗi xoắn
+            const spiralOffset = (spiral / spirals) * Math.PI * 2;
+
+            for (let i = 0; i < particlesPerSpiral; i++) {
+                const progress = i / particlesPerSpiral;
+                const radius = 0.5 + progress * 4;  // Bán kính tăng dần
+                const angle = spiralOffset + progress * Math.PI * 2 * rotations;
+                const hue = (spiralHueBase + progress * 120) % 360;  // Chuyển màu dọc theo xoắn
+
+                // Tính toán vị trí
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+
+                // Thêm hạt chính của xoắn
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        hue,
+                        'circle',
+                        progress * 0.3,
+                        false,
+                        0.9 - progress * 0.3
+                    )
+                );
+
+                // Thêm tia sáng nhiều màu
+                if (Math.random() < 0.4) {
+                    const sparkHue = (hue + 60) % 360;  // Màu bổ sung
+                    const sparkSpread = webRandom.randomFloat(-0.3, 0.3);
                     this.particles.push(
                         new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(angle + spread) * (velocity + velocityVar),
-                            Math.sin(angle + spread) * (velocity + velocityVar),
-                            ringHue,
-                            type,
-                            0,
-                            this.isRecursive,
-                            delay + j * 0.02
+                            this.targetX,
+                            this.targetY,
+                            x + sparkSpread,
+                            y + sparkSpread,
+                            sparkHue,
+                            'star',
+                            progress * 0.3 + 0.1,
+                            false,
+                            0.7
+                        )
+                    );
+                }
+
+                // Thêm hiệu ứng cầu vồng
+                if (Math.random() < 0.3) {
+                    const rainbowHue = (hue + 180) % 360;  // Màu đối lập
+                    const rainbowSpread = webRandom.randomFloat(-0.5, 0.5);
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            x + rainbowSpread,
+                            y + rainbowSpread,
+                            rainbowHue,
+                            'circle',
+                            progress * 0.3 + 0.15,
+                            false,
+                            0.5
+                        )
+                    );
+                }
+
+                // Thêm hiệu ứng lấp lánh
+                if (Math.random() < 0.2) {
+                    const glitterHue = (hue + 30) % 360;  // Màu gần
+                    const glitterX = x * (1.05 + Math.random() * 0.1);
+                    const glitterY = y * (1.05 + Math.random() * 0.1);
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            glitterX,
+                            glitterY,
+                            glitterHue,
+                            'star',
+                            progress * 0.2,
+                            false,
+                            0.6
                         )
                     );
                 }
             }
         }
-    }
 
-    createFanEffect(particleCount) {
-        const fanAngle = Math.PI * 0.7;
-        const centerAngle = webRandom.randomFloat(0, Math.PI * 2);
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        
-        const numLayers = 3;
-        for (let layer = 0; layer < numLayers; layer++) {
-            const layerParticles = Math.floor(particleCount / numLayers);
-            const baseVelocity = 5 + layer * 2;
-            
-            for (let i = 0; i < layerParticles; i++) {
-                const progress = i / layerParticles;
-                const angle = centerAngle - fanAngle/2 + (fanAngle * progress);
-                
-                const velocityMultiplier = 1 - Math.abs(progress - 0.5) * 0.5;
-                const velocity = baseVelocity + velocityMultiplier * 2;
-                
-                const clusterSize = 4;
-                for (let j = 0; j < clusterSize; j++) {
-                    const spread = webRandom.randomFloat(-0.1, 0.1);
-                    const velocityVar = webRandom.randomFloat(-0.5, 0.5);
-                    
-                    this.particles.push(
-                        new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(angle + spread) * (velocity + velocityVar),
-                            Math.sin(angle + spread) * (velocity + velocityVar),
-                            (this.hue + layer * 15) % 360,
-                            type,
-                            0,
-                            this.isRecursive,
-                            layer * 0.05 + j * 0.01
-                        )
-                    );
-                }
-            }
-        }
-    }
+        // Thêm hiệu ứng tia sáng xung quanh
+        const rayCount = 24;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * Math.PI * 2;
+            const length = 1 + Math.random() * 2;
+            const rayHue = (this.hue + i * (360 / rayCount)) % 360;  // Màu cầu vồng cho tia
 
-    createDoubleEffect(particleCount) {
-        const halfCount = Math.floor(particleCount / 2);
-        const angleStep = (Math.PI * 2) / halfCount;
-        const types = ['circle', 'star'];
-        
-        for (let i = 0; i < halfCount; i++) {
-            const angle = angleStep * i;
-            const velocity = webRandom.randomFloat(3, 4);
-            const type = types[webRandom.randomInt(0, types.length - 1)];
-            
             for (let j = 0; j < 3; j++) {
-                const spread = webRandom.randomFloat(-0.1, 0.1);
-                const velocityVar = webRandom.randomFloat(-0.2, 0.2);
-                
+                const progress = j / 3;
+                const x = Math.cos(angle) * (length * progress);
+                const y = Math.sin(angle) * (length * progress);
+
                 this.particles.push(
                     new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        this.hue,
-                        type,
-                        0,
-                        this.isRecursive,
-                        j * 0.02
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        rayHue,
+                        'star',
+                        0.1 + progress * 0.2,
+                        false,
+                        0.8 - progress * 0.4
                     )
                 );
             }
         }
-        
-        for (let i = 0; i < halfCount; i++) {
-            const angle = -angleStep * i;
-            const velocity = webRandom.randomFloat(6, 7);
-            const type = types[webRandom.randomInt(0, types.length - 1)];
-            
-            for (let j = 0; j < 2; j++) {
-                const spread = webRandom.randomFloat(-0.15, 0.15);
-                const velocityVar = webRandom.randomFloat(-0.3, 0.3);
-                
-                this.particles.push(
-                    new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        (this.hue + 140) % 360,
-                        type,
-                        0,
-                        this.isRecursive,
-                        0.1 + j * 0.03
-                    )
-                );
-            }
+
+        // Thêm hiệu ứng bụi màu
+        const dustCount = 30;
+        for (let i = 0; i < dustCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2 + Math.random() * 3;
+            const dustHue = (this.hue + Math.random() * 360) % 360;  // Màu ngẫu nhiên
+
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    dustHue,
+                    'circle',
+                    Math.random() * 0.3,
+                    false,
+                    0.4
+                )
+            );
         }
     }
 
     createHeartEffect(particleCount) {
         const types = ['heart'];
         const type = types[webRandom.randomInt(0, types.length - 1)];
-        const heartSize = 8;
+        const heartSize = this.effectParams.heart.size * 5; 
+        
+        const numPoints = Math.floor(particleCount * 1.8);
         const points = [];
         
-        // Tạo điểm cho hình trái tim
-        for (let i = 0; i < particleCount; i++) {
-            const t = (i / particleCount) * Math.PI * 2;
+        // Tính toán các điểm của trái tim
+        for (let i = 0; i < numPoints; i++) {
+            const t = (i / numPoints) * Math.PI * 2;
             const x = 16 * Math.pow(Math.sin(t), 3);
-            const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-            points.push({x: x * heartSize / 16, y: -y * heartSize / 16});
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+            points.push({
+                x: x * heartSize / 16,
+                y: y * heartSize / 16,
+                angle: t
+            });
         }
-        
-        // Tạo particle cho mỗi điểm
+
         points.forEach((point, i) => {
-            const velocity = webRandom.randomFloat(2, 4);
-            const angle = Math.atan2(point.y, point.x);
-            const delay = (i / particleCount) * 0.3; // Hiệu ứng nở dần
+            const delay = (i / numPoints) * 0.2; 
+            const burstVelocity = webRandom.randomFloat(6, 9);
             
-            this.particles.push(
-                new Particle(
-                    this.x,
-                    this.y,
-                    Math.cos(angle) * velocity,
-                    Math.sin(angle) * velocity,
-                    this.hue,
-                    type,
-                    0,
-                    this.isRecursive,
-                    delay
-                )
+            const burstParticle = new Particle(
+                this.x,
+                this.y,
+                Math.cos(point.angle) * burstVelocity,
+                Math.sin(point.angle) * burstVelocity,
+                this.hue,
+                type,
+                0,
+                false,
+                delay
             );
+
+            burstParticle.targetX = this.x + point.x;
+            burstParticle.targetY = this.y + point.y;
+            burstParticle.originalVX = burstParticle.vx;
+            burstParticle.originalVY = burstParticle.vy;
+            burstParticle.heartPoint = true;
+            burstParticle.heartPhase = 0;
+            burstParticle.transitionTime = 0.4; 
+            burstParticle.heartPosition = {x: point.x, y: point.y};
+            burstParticle.scaleFactor = 1.4;
+            burstParticle.baseLifespan = 1.0; 
+            burstParticle.lifespan = burstParticle.baseLifespan;
+            
+            burstParticle.update = function() {
+                if (!this.active) {
+                    this.delay -= 0.016;
+                    if (this.delay <= 0) {
+                        this.active = true;
+                    }
+                    return true;
+                }
+
+                if (this.heartPoint) {
+                    this.heartPhase += 0.016; 
+                    
+                    if (this.heartPhase < this.transitionTime) {
+                        // Phase 0: Nổ ra
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.vx *= 0.92;
+                        this.vy *= 0.92;
+                    } else if (this.heartPhase < this.transitionTime * 2) {
+                        // Phase 1: Định hình trái tim
+                        const progress = (this.heartPhase - this.transitionTime) / this.transitionTime;
+                        const elasticProgress = this.elasticEase(progress);
+                        
+                        const scale = 1 + Math.sin(progress * Math.PI) * 0.4;
+                        const targetX = this.targetX + this.heartPosition.x * (scale - 1);
+                        const targetY = this.targetY + this.heartPosition.y * (scale - 1);
+                        
+                        this.x = this.x + (targetX - this.x) * elasticProgress;
+                        this.y = this.y + (targetY - this.y) * elasticProgress;
+                    } else {
+                        // Phase 2: Rơi xuống
+                        const heartbeatScale = 1 + Math.sin(this.heartPhase * 2) * 0.15;
+                        const fallProgress = (this.heartPhase - this.transitionTime * 2);
+                        
+                        this.x = this.targetX + this.heartPosition.x * heartbeatScale;
+                        this.y = this.targetY + this.heartPosition.y * heartbeatScale + fallProgress * 1.2; 
+                        
+                        this.x += Math.sin(this.heartPhase * 1.5) * 0.6;
+                    }
+
+                    // Giảm thởi gian sống nhanh hơn sau khi định hình
+                    if (this.heartPhase > this.transitionTime * 2.5) {
+                        this.lifespan -= 0.015; 
+                    } else {
+                        this.lifespan -= 0.005; 
+                    }
+                } else {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vx *= this.friction;
+                    this.vy *= this.friction;
+                    this.vy += this.gravity * 0.6;
+                    this.lifespan -= 0.02; 
+                }
+
+                return this.lifespan > 0;
+            };
+
+            burstParticle.elasticEase = function(t) {
+                const p = 0.4;
+                return Math.pow(2, -10 * t) * Math.sin((t - p/4) * (2 * Math.PI) / p) + 1;
+            };
+
+            this.particles.push(burstParticle);
         });
+
+        // Particle trang trí
+        const decorativeParticles = Math.floor(particleCount * 0.8);
+        for (let i = 0; i < decorativeParticles; i++) {
+            const angle = webRandom.randomFloat(0, Math.PI * 2);
+            const velocity = webRandom.randomFloat(4, 7);
+            const delay = webRandom.randomFloat(0, 0.4); 
+
+            const particle = new Particle(
+                this.x,
+                this.y,
+                Math.cos(angle) * velocity,
+                Math.sin(angle) * velocity,
+                (this.hue + webRandom.randomFloat(-30, 30)) % 360,
+                'star',
+                0,
+                false,
+                delay
+            );
+            
+            particle.lifespan = 0.8; 
+            
+            this.particles.push(particle);
+        }
     }
 
     createStarEffect(particleCount) {
-        const types = ['star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const points = 5;
-        const innerRadius = 3;
-        const outerRadius = 6;
+        particleCount = this.getParticleCount(particleCount);
+        const points = 5;  // Số điểm của ngôi sao
+        const particlesPerPoint = Math.floor(particleCount / points);
         
-        for (let i = 0; i < points * 2; i++) {
-            const angle = (i * Math.PI) / points;
-            const radius = i % 2 === 0 ? outerRadius : innerRadius;
-            const velocity = webRandom.randomFloat(2, 5);
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 60;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 4 + Math.random() * 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+        }
+        
+        // Tạo vòng sáng trung tâm
+        const coreParticles = 40;
+        for (let i = 0; i < coreParticles; i++) {
+            const angle = (i / coreParticles) * Math.PI * 2;
+            const velocity = 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+        
+        // Tạo các điểm của ngôi sao
+        for (let point = 0; point < points; point++) {
+            const pointAngle = (point / points) * Math.PI * 2;
+            const pointHueShift = (360 / points) * point;
             
-            // Tạo cluster cho mỗi đỉnh
-            for (let j = 0; j < particleCount/10; j++) {
-                const spread = webRandom.randomFloat(-0.2, 0.2);
-                const velocityVar = webRandom.randomFloat(-0.5, 0.5);
-                const delay = (i / (points * 2)) * 0.2;
+            // Tạo tia chính của mỗi điểm
+            for (let i = 0; i < particlesPerPoint; i++) {
+                const progress = i / particlesPerPoint;
+                const radius = 2 + progress * 4;  // Độ dài tia
+                const spread = Math.PI / 8;  // Độ rộng của tia
+                
+                // Tính toán góc cho hình dạng ngôi sao
+                const starShape = Math.sin(progress * Math.PI) * spread;
+                const angle = pointAngle + starShape;
+                
+                // Tính toán vị trí
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                // Thêm hạt chính của tia
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + pointHueShift + progress * 30) % 360,
+                        'circle',
+                        progress * 0.3,
+                        false,
+                        0.9 - progress * 0.3
+                    )
+                );
+                
+                // Thêm tia sáng
+                if (Math.random() < 0.4) {
+                    const sparkSpread = webRandom.randomFloat(-0.3, 0.3);
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            x + sparkSpread,
+                            y + sparkSpread,
+                            (this.hue + pointHueShift + 60) % 360,
+                            'star',
+                            progress * 0.3 + 0.1,
+                            false,
+                            0.7
+                        )
+                    );
+                }
+                
+                // Thêm hiệu ứng mờ ảo
+                if (Math.random() < 0.3 && progress > 0.2) {
+                    const mistSpread = webRandom.randomFloat(-0.5, 0.5);
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            x + mistSpread,
+                            y + mistSpread,
+                            (this.hue + pointHueShift + 30) % 360,
+                            'circle',
+                            progress * 0.3 + 0.15,
+                            false,
+                            0.4
+                        )
+                    );
+                }
+            }
+            
+            // Tạo đuôi sao cho mỗi điểm
+            const tailParticles = 20;
+            for (let i = 0; i < tailParticles; i++) {
+                const progress = i / tailParticles;
+                const tailAngle = pointAngle + Math.PI;  // Ngược với hướng tia chính
+                const tailRadius = (0.5 + progress * 2) * (1 - progress);  // Độ dài đuôi giảm dần
+                
+                const x = Math.cos(tailAngle) * tailRadius;
+                const y = Math.sin(tailAngle) * tailRadius;
                 
                 this.particles.push(
                     new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        this.hue,
-                        type,
-                        0,
-                        this.isRecursive,
-                        delay
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + pointHueShift - 30) % 360,
+                        'circle',
+                        progress * 0.2,
+                        false,
+                        0.6 - progress * 0.4
                     )
                 );
             }
+        }
+        
+        // Thêm hiệu ứng tia sáng xung quanh
+        const rayCount = 20;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * Math.PI * 2;
+            const length = 1 + Math.random() * 3;
+            
+            for (let j = 0; j < 5; j++) {
+                const progress = j / 5;
+                const x = Math.cos(angle) * (length * progress);
+                const y = Math.sin(angle) * (length * progress);
+                
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + 40) % 360,
+                        'star',
+                        0.1 + progress * 0.2,
+                        false,
+                        0.8 - progress * 0.4
+                    )
+                );
+            }
+        }
+        
+        // Thêm hiệu ứng lấp lánh xung quanh ngôi sao
+        const sparkleCount = 40;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2 + Math.random() * 4;
+            
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    (this.hue + 80) % 360,
+                    'star',
+                    Math.random() * 0.3,
+                    false,
+                    0.6
+                )
+            );
         }
     }
 
@@ -706,20 +949,20 @@ class Firework {
             
             for (let i = 0; i < particlesInCircle; i++) {
                 const angle = angleStep * i;
-                const velocity = radius;
-                const delay = circle * 0.1;
                 
                 // Tạo cluster cho mỗi điểm
                 for (let j = 0; j < 3; j++) {
                     const spread = webRandom.randomFloat(-0.1, 0.1);
                     const velocityVar = webRandom.randomFloat(-0.2, 0.2);
+                    const delay = circle * 0.1;
                     
+                    // Hạt chính
                     this.particles.push(
                         new Particle(
                             this.x,
                             this.y,
-                            Math.cos(angle + spread) * (velocity + velocityVar),
-                            Math.sin(angle + spread) * (velocity + velocityVar),
+                            Math.cos(angle + spread) * (radius + velocityVar),
+                            Math.sin(angle + spread) * (radius + velocityVar),
                             (this.hue + circle * 30) % 360,
                             type,
                             0,
@@ -727,6 +970,29 @@ class Firework {
                             delay + j * 0.02
                         )
                     );
+                    
+                    // Hạt phụ
+                    if (j === 0) {
+                        const trailCount = 2;
+                        for (let k = 0; k < trailCount; k++) {
+                            const trailSpread = webRandom.randomFloat(-0.2, 0.2);
+                            const trailVelocity = radius * 0.7;
+                            
+                            this.particles.push(
+                                new Particle(
+                                    this.x,
+                                    this.y,
+                                    Math.cos(angle + trailSpread) * trailVelocity,
+                                    Math.sin(angle + trailSpread) * trailVelocity,
+                                    (this.hue + circle * 30 + 30) % 360,
+                                    'circle',
+                                    0,
+                                    this.isRecursive,
+                                    delay + 0.1
+                                )
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -744,7 +1010,7 @@ class Firework {
             const angleStep = (Math.PI * 2) / particlesPerBurst;
             for (let i = 0; i < particlesPerBurst; i++) {
                 const angle = angleStep * i + webRandom.randomFloat(-0.1, 0.1);
-                const velocity = webRandom.randomFloat(3, 5);
+                const velocity = 3 + webRandom.randomFloat(0, 2);
                 
                 // 20% cơ hội tạo burst mới
                 const willBurst = webRandom.randomFloat(0, 1) < 0.2;
@@ -808,9 +1074,9 @@ class Firework {
                         velocity.y,
                         (this.hue + progress * 100) % 360,
                         type,
-                        0,
+                        progress * 0.2, // Delay để tạo hiệu ứng kéo dài
                         this.isRecursive,
-                        progress * 0.3
+                        0.8 - progress * 0.6
                     )
                 );
                 
@@ -823,9 +1089,9 @@ class Firework {
                         velocity.y * 0.8,
                         this.hue,
                         'circle',
-                        0,
+                        progress * 0.2,
                         false,
-                        progress * 0.3 + 0.1
+                        0.8
                     );
                     this.particles.push(connector);
                 }
@@ -834,121 +1100,519 @@ class Firework {
     }
 
     createGalaxyEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const arms = 4;
-        const armLength = 8;
+        particleCount = this.getParticleCount(particleCount);
+        const spiralArms = 5;  // Số cánh xoắn
+        const particlesPerArm = Math.floor(particleCount / spiralArms);
+
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 50;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 4 + Math.random() * 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+        }
         
-        for (let arm = 0; arm < arms; arm++) {
-            const baseAngle = (arm * Math.PI * 2) / arms;
+        // Tạo vòng sáng trung tâm
+        const coreParticles = 40;
+        for (let i = 0; i < coreParticles; i++) {
+            const angle = (i / coreParticles) * Math.PI * 2;
+            const velocity = 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+        
+        // Tạo các cánh xoắn ốc
+        for (let arm = 0; arm < spiralArms; arm++) {
+            const armAngle = (arm / spiralArms) * Math.PI * 2;
+            const armHueShift = (360 / spiralArms) * arm;
             
-            for (let i = 0; i < particleCount/arms; i++) {
-                const distance = (i / (particleCount/arms)) * armLength;
-                const curve = distance * 0.5;
-                const angle = baseAngle + curve;
+            for (let i = 0; i < particlesPerArm; i++) {
+                const progress = i / particlesPerArm;
+                const radius = 1 + progress * 6;  // Tăng bán kính theo tiến trình
+                const rotation = progress * 4 * Math.PI;  // Số vòng xoắn
+                const angle = armAngle + rotation;
                 
-                const velocity = 2 + distance * 0.3;
+                // Tính toán vị trí và vận tốc
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const delay = progress * 0.5;  // Độ trễ tạo hiệu ứng xoắn
                 
-                for (let j = 0; j < 3; j++) {
-                    const spread = webRandom.randomFloat(-0.2, 0.2);
-                    const velocityVar = webRandom.randomFloat(-0.5, 0.5);
-                    const delay = (distance / armLength) * 0.3;
-                    
+                // Thêm hạt chính của cánh xoắn
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + armHueShift + progress * 30) % 360,
+                        'circle',
+                        delay,
+                        false,
+                        0.9 - progress * 0.3
+                    )
+                );
+                
+                // Thêm các ngôi sao lấp lánh
+                if (Math.random() < 0.4) {
+                    const starSpread = webRandom.randomFloat(-0.5, 0.5);
                     this.particles.push(
                         new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(angle + spread) * (velocity + velocityVar),
-                            Math.sin(angle + spread) * (velocity + velocityVar),
-                            (this.hue + distance * 15) % 360,
-                            type,
-                            0,
-                            this.isRecursive,
-                            delay
+                            this.targetX,
+                            this.targetY,
+                            x + starSpread,
+                            y + starSpread,
+                            (this.hue + armHueShift + 60) % 360,
+                            'star',
+                            delay + 0.1,
+                            false,
+                            0.7
+                        )
+                    );
+                }
+                
+                // Thêm hiệu ứng bụi không gian
+                if (Math.random() < 0.3) {
+                    const dustSpread = webRandom.randomFloat(-0.8, 0.8);
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            x + dustSpread,
+                            y + dustSpread,
+                            (this.hue + armHueShift + 30) % 360,
+                            'circle',
+                            delay + 0.2,
+                            false,
+                            0.5
                         )
                     );
                 }
             }
         }
-    }
-
-    createButterflyEffect(particleCount) {
-        const types = ['circle', 'heart'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
         
-        for (let i = 0; i < particleCount; i++) {
-            const t = (i / particleCount) * Math.PI * 2;
-            // Phương trình hình cánh bướm
-            const r = Math.exp(Math.cos(t)) - 2 * Math.cos(4*t) + Math.pow(Math.sin(t/12), 5);
-            const x = Math.sin(t) * r * 3;
-            const y = Math.cos(t) * r * 3;
+        // Thêm các ngôi sao xa xôi
+        const distantStars = 60;
+        for (let i = 0; i < distantStars; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 4 + Math.random() * 4;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
             
-            const velocity = webRandom.randomFloat(2, 4);
-            const angle = Math.atan2(y, x);
-            const delay = (i / particleCount) * 0.5;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    x,
+                    y,
+                    (this.hue + 80) % 360,
+                    'star',
+                    Math.random() * 0.5,
+                    false,
+                    0.6
+                )
+            );
+        }
+        
+        // Thêm hiệu ứng sương mù không gian
+        const spaceNebulaCount = 40;
+        for (let i = 0; i < spaceNebulaCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2 + Math.random() * 6;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
             
-            // Tạo cụm hạt cho mỗi điểm
-            for (let j = 0; j < 2; j++) {
-                const spread = webRandom.randomFloat(-0.1, 0.1);
-                const velocityVar = webRandom.randomFloat(-0.2, 0.2);
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    x,
+                    y,
+                    (this.hue + 120) % 360,
+                    'circle',
+                    Math.random() * 0.3,
+                    false,
+                    0.4
+                )
+            );
+        }
+        
+        // Thêm hiệu ứng tia sáng từ trung tâm
+        const rayCount = 8;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * Math.PI * 2;
+            const length = 3 + Math.random() * 2;
+            
+            for (let j = 0; j < 5; j++) {
+                const progress = j / 5;
+                const x = Math.cos(angle) * (length * progress);
+                const y = Math.sin(angle) * (length * progress);
                 
                 this.particles.push(
                     new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        (this.hue + i * 2) % 360,
-                        type,
-                        0,
-                        this.isRecursive,
-                        delay + j * 0.02
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + 40) % 360,
+                        'star',
+                        0.1 + progress * 0.2,
+                        false,
+                        0.8 - progress * 0.4
                     )
                 );
             }
         }
     }
 
-    createFlowerEffect(particleCount) {
-        const types = ['circle', 'heart'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const petals = 6;
-        const layers = 3;
-        
+    createButterflyEffect(particleCount) {
+        particleCount = this.getParticleCount(particleCount);
+        const wings = 2;
+        const layers = 4;
+        const particlesPerWing = Math.floor(particleCount / (wings * layers));
+
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 40;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 4 + Math.random() * 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+        }
+
+        // Tạo vòng sáng
+        const ringParticles = 30;
+        for (let i = 0; i < ringParticles; i++) {
+            const angle = (i / ringParticles) * Math.PI * 2;
+            const velocity = 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+
+        // Tạo cánh bướm (sử dụng đường cong Bézier để tạo hình mượt mà hơn)
         for (let layer = 0; layer < layers; layer++) {
-            const radius = 3 + layer * 2;
+            const layerScale = 1 + layer * 0.3;  // Mỗi lớp có kích thước khác nhau
+            const layerDelay = layer * 0.1;     // Độ trễ giữa các lớp
             
-            for (let petal = 0; petal < petals; petal++) {
-                const baseAngle = (petal * Math.PI * 2) / petals;
+            for (let side = 0; side < 2; side++) {
+                const isRightWing = side === 1;
+                const sideMultiplier = isRightWing ? 1 : -1;
                 
-                for (let i = 0; i < particleCount/(petals * layers); i++) {
-                    const progress = i / (particleCount/(petals * layers));
-                    // Phương trình hình cánh hoa
-                    const r = radius * (1 + Math.sin(progress * Math.PI));
-                    const angle = baseAngle + progress * 0.5;
+                for (let i = 0; i < particlesPerWing; i++) {
+                    const progress = i / particlesPerWing;
+                    const t = progress * Math.PI;
                     
-                    const x = Math.cos(angle) * r;
-                    const y = Math.sin(angle) * r;
+                    // Tạo hình dạng cánh bướm đẹp hơn
+                    const wingShape = Math.sin(t) * (1 + Math.cos(t * 2));  // Công thức cải tiến
+                    const x = sideMultiplier * wingShape * 3 * layerScale;
+                    const y = Math.cos(t) * Math.sin(t * 2) * 3 * layerScale;
                     
-                    const velocity = webRandom.randomFloat(2, 4);
-                    const particleAngle = Math.atan2(y, x);
-                    const delay = layer * 0.2 + progress * 0.3;
+                    // Tính toán vận tốc để tạo hiệu ứng bay lên
+                    const velocity = 2 + Math.sin(progress * Math.PI) * 2;
+                    const angle = Math.atan2(y, x);
+                    const vx = Math.cos(angle) * velocity;
+                    const vy = Math.sin(angle) * velocity - 0.5;  // Thêm lực đẩy lên trên
                     
-                    for (let j = 0; j < 2; j++) {
-                        const spread = webRandom.randomFloat(-0.1, 0.1);
-                        const velocityVar = webRandom.randomFloat(-0.2, 0.2);
+                    // Thêm các hạt chính tạo thành cánh
+                    const hueShift = layer * 15 + progress * 30;
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            vx,
+                            vy,
+                            (this.hue + hueShift) % 360,
+                            'circle',
+                            layerDelay + progress * 0.2,
+                            false,
+                            0.9 - progress * 0.3
+                        )
+                    );
+                    
+                    // Thêm các hạt phụ tạo hiệu ứng tia sáng
+                    if (Math.random() < 0.4) {
+                        const sparkSpread = webRandom.randomFloat(-0.2, 0.2);
+                        const sparkVelocity = velocity * 1.2;
+                        const sparkAngle = angle + sparkSpread;
+                        const sparkVx = Math.cos(sparkAngle) * sparkVelocity;
+                        const sparkVy = Math.sin(sparkAngle) * sparkVelocity - 0.8;
                         
                         this.particles.push(
                             new Particle(
-                                this.x,
-                                this.y,
-                                Math.cos(particleAngle + spread) * (velocity + velocityVar),
-                                Math.sin(particleAngle + spread) * (velocity + velocityVar),
-                                (this.hue + layer * 30) % 360,
-                                type,
-                                0,
-                                this.isRecursive,
-                                delay + j * 0.02
+                                this.targetX,
+                                this.targetY,
+                                sparkVx,
+                                sparkVy,
+                                (this.hue + hueShift + 60) % 360,
+                                'star',
+                                layerDelay + progress * 0.1,
+                                false,
+                                0.8
+                            )
+                        );
+                    }
+                    
+                    // Thêm các hạt bụi tạo hiệu ứng mờ ảo
+                    if (Math.random() < 0.3 && progress > 0.2) {
+                        const mistSpread = webRandom.randomFloat(-0.4, 0.4);
+                        const mistVelocity = velocity * 0.7;
+                        const mistAngle = angle + mistSpread;
+                        const mistVx = Math.cos(mistAngle) * mistVelocity;
+                        const mistVy = Math.sin(mistAngle) * mistVelocity - 0.3;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                mistVx,
+                                mistVy,
+                                (this.hue + hueShift - 30) % 360,
+                                'circle',
+                                layerDelay + progress * 0.25,
+                                false,
+                                0.4
+                            )
+                        );
+                    }
+                    
+                    // Thêm các hạt lấp lánh ở viền cánh
+                    if (Math.random() < 0.5 && (progress < 0.2 || progress > 0.8)) {
+                        const glitterX = x * (1.05 + Math.random() * 0.1);
+                        const glitterY = y * (1.05 + Math.random() * 0.1);
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                glitterX,
+                                glitterY,
+                                (this.hue + hueShift + 60) % 360,
+                                'star',
+                                layerDelay,
+                                false,
+                                0.9
+                            )
+                        );
+                    }
+                }
+            }
+        }
+
+        // Tạo thân bướm đẹp hơn
+        const bodyParticles = 15;  // Tăng số lượng hạt
+        const bodyWidth = 0.3;     // Độ rộng của thân
+        
+        for (let i = 0; i < bodyParticles; i++) {
+            const progress = i / bodyParticles;
+            const angle = Math.sin(progress * Math.PI * 4) * bodyWidth;  // Tạo hình sin
+            const x = Math.cos(angle) * bodyWidth;
+            const y = (progress - 0.5) * 3;  // Kéo dài thân
+            
+            // Hạt thân chính
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    x,
+                    y,
+                    (this.hue + 30) % 360,
+                    'circle',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+            
+            // Thêm hạt phụ cho thân
+            if (Math.random() < 0.5) {
+                const sparkX = x + webRandom.randomFloat(-0.1, 0.1);
+                const sparkY = y + webRandom.randomFloat(-0.1, 0.1);
+                
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        sparkX,
+                        sparkY,
+                        (this.hue + 60) % 360,
+                        'star',
+                        0.1,
+                        false,
+                        0.7
+                    )
+                );
+            }
+        }
+    }
+
+    createWillowEffect(particleCount) {
+        particleCount = this.getParticleCount(particleCount);
+        const streams = 150; // Tăng số lượng tia
+        const layers = 4;    // Thêm nhiều lớp
+        const particlesPerStream = Math.floor(particleCount / (streams * layers));
+
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 30;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 3 + Math.random();
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    1
+                )
+            );
+        }
+
+        for (let layer = 0; layer < layers; layer++) {
+            const layerScale = 1 + layer * 0.2;  // Mỗi lớp có kích thước khác nhau
+            const layerDelay = layer * 0.1;     // Độ trễ giữa các lớp
+            
+            for (let stream = 0; stream < streams; stream++) {
+                const baseAngle = (stream / streams) * Math.PI * 2;
+                const streamVelocity = 2 + Math.random() * 2; // Tốc độ ngẫu nhiên cho mỗi tia
+                
+                for (let i = 0; i < particlesPerStream; i++) {
+                    const progress = i / particlesPerStream;
+                    const spread = Math.sin(progress * Math.PI) * 0.1; // Tạo độ cong nhẹ
+                    const angle = baseAngle + spread;
+                    
+                    // Tốc độ giảm dần theo tiến trình để tạo hiệu ứng rủ xuống
+                    const velocity = (streamVelocity - progress * 1.5) * layerScale;
+                    const gravity = progress * 0.2; // Thêm trọng lực để tạo hiệu ứng rủ
+                    
+                    const x = Math.cos(angle) * velocity;
+                    const y = Math.sin(angle) * velocity + gravity;
+                    
+                    // Thêm các hạt chính với màu sắc chuyển đổi đẹp mắt
+                    const hueShift = layer * 10 + progress * 20;
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            x,
+                            y,
+                            (this.hue + hueShift) % 360,
+                            'circle',
+                            layerDelay + progress * 0.2,
+                            false,
+                            0.9 - progress * 0.6
+                        )
+                    );
+                    
+                    // Thêm các hạt phụ tạo hiệu ứng tia sáng
+                    if (Math.random() < 0.3) {
+                        const sparkVelocity = velocity * 0.9;
+                        const sparkSpread = webRandom.randomFloat(-0.2, 0.2);
+                        const sparkX = Math.cos(angle + sparkSpread) * sparkVelocity;
+                        const sparkY = Math.sin(angle + sparkSpread) * sparkVelocity;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                sparkX,
+                                sparkY,
+                                (this.hue + hueShift + 30) % 360,
+                                'circle',
+                                layerDelay + progress * 0.2 + 0.1,
+                                false,
+                                0.6
+                            )
+                        );
+                    }
+                    
+                    // Thêm các hạt bụi tạo hiệu ứng mờ ảo
+                    if (Math.random() < 0.2 && progress > 0.3) {
+                        const mistVelocity = velocity * 0.7;
+                        const mistSpread = webRandom.randomFloat(-0.3, 0.3);
+                        const mistX = Math.cos(angle + mistSpread) * mistVelocity;
+                        const mistY = Math.sin(angle + mistSpread) * mistVelocity + gravity * 0.6;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                mistX,
+                                mistY,
+                                (this.hue + hueShift - 20) % 360,
+                                'circle',
+                                layerDelay + progress * 0.2 + 0.15,
+                                false,
+                                0.4
+                            )
+                        );
+                    }
+                    
+                    // Thêm các hạt lấp lánh ở phần đầu
+                    if (Math.random() < 0.4 && progress < 0.2) {
+                        const glitterVelocity = velocity * 1.1;
+                        const glitterSpread = webRandom.randomFloat(-0.1, 0.1);
+                        const glitterX = Math.cos(angle + glitterSpread) * glitterVelocity;
+                        const glitterY = Math.sin(angle + glitterSpread) * glitterVelocity;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                glitterX,
+                                glitterY,
+                                (this.hue + hueShift + 60) % 360,
+                                'star',
+                                layerDelay,
+                                false,
+                                0.9
                             )
                         );
                     }
@@ -957,289 +1621,633 @@ class Firework {
         }
     }
 
-    createRainEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const width = 40;    // Tăng độ rộng từ 20 lên 40
-        const height = 30;   // Tăng chiều cao từ 15 lên 30
-        // Tạo nhiều cụm mưa
-        const numClusters = 5;
-        for (let cluster = 0; cluster < numClusters; cluster++) {
-            const clusterOffsetX = webRandom.randomFloat(-width * 0.8, width * 0.8);
-            const clusterOffsetY = webRandom.randomFloat(-height * 0.5, height * 0.5);
-            const clusterParticles = Math.floor(particleCount / numClusters);
+    createPalmEffect(particleCount) {
+        particleCount = this.getParticleCount(particleCount);
+        const trunk = Math.floor(particleCount * 0.2);
+        const fronds = 6;
+        const particlesPerFrond = Math.floor((particleCount - trunk) / fronds);
+        
+        // Tạo thân cây
+        for (let i = 0; i < trunk; i++) {
+            const progress = i / trunk;
+            const velocity = 5 + progress * 2;
+            const spread = webRandom.randomFloat(-0.1, 0.1);
             
-            for (let i = 0; i < clusterParticles; i++) {
-                // Phân bố hạt trong một hình oval
-                const angle = webRandom.randomFloat(0, Math.PI * 2);
-                const radiusX = webRandom.randomFloat(0, width/2);
-                const radiusY = webRandom.randomFloat(0, height/2);
-                const x = Math.cos(angle) * radiusX + clusterOffsetX;
-                const y = Math.sin(angle) * radiusY + clusterOffsetY;
+            const trunkParticle = new Particle(
+                this.x,
+                this.y,
+                spread * velocity * 0.1,
+                -velocity,
+                this.hue,
+                'circle',
+                0,
+                this.isRecursive,
+                progress * 0.2
+            );
+            
+            trunkParticle.gravity = 0.15;
+            this.particles.push(trunkParticle);
+        }
+        
+        // Tạo các tán lá
+        for (let frond = 0; frond < fronds; frond++) {
+            const baseAngle = -Math.PI/2 + (frond - fronds/2) * 0.4;
+            
+            for (let i = 0; i < particlesPerFrond; i++) {
+                const progress = i / particlesPerFrond;
+                const velocity = 4 + progress * 3;
+                const angle = baseAngle + Math.sin(progress * Math.PI) * 0.5;
+                const spread = webRandom.randomFloat(-0.1, 0.1);
                 
-                // Tạo góc rơi ngẫu nhiên cho mỗi cụm
-                const baseAngle = Math.PI/2 + webRandom.randomFloat(-0.3, 0.3);
-                const clusterSpread = webRandom.randomFloat(-0.2, 0.2);
-                const finalAngle = baseAngle + clusterSpread;
+                const frondParticle = new Particle(
+                    this.x,
+                    this.y,
+                    Math.cos(angle + spread) * velocity,
+                    Math.sin(angle + spread) * velocity,
+                    (this.hue + frond * 10) % 360,
+                    'star',
+                    0,
+                    this.isRecursive,
+                    0.3 + progress * 0.2
+                );
                 
-                // Tốc độ rơi thay đổi theo vị trí
-                const distanceFromCenter = Math.sqrt(x*x + y*y);
-                const baseVelocity = 4 + distanceFromCenter * 0.1;
-                const velocity = baseVelocity + webRandom.randomFloat(-1, 1);
+                frondParticle.gravity = 0.12;
+                this.particles.push(frondParticle);
                 
-                // Delay dựa trên vị trí Y để tạo hiệu ứng rơi tuần tự
-                const delay = (y + height/2) / height * 0.5 + cluster * 0.1;
-                
-                // Tạo dải mưa sao với độ dài thay đổi
-                const trailLength = webRandom.randomInt(2, 4);
-                for (let j = 0; j < trailLength; j++) {
-                    const trailDelay = delay + j * 0.03;
-                    const trailVelocity = velocity * (1 - j * 0.15);  // Giảm tốc độ theo độ dài dải mưa
-                    const alpha = 1 - (j / trailLength) * 0.5;  // Độ trong suốt giảm dần
+                // Thêm các hạt phụ
+                if (webRandom.randomFloat(0, 1) < 0.3) {
+                    const sparkVelocity = velocity * 0.8;
+                    const sparkSpread = spread * 2;
                     
+                    const sparkParticle = new Particle(
+                        this.x,
+                        this.y,
+                        sparkVelocity.x,
+                        sparkVelocity.y,
+                        (this.hue + frond * 10 + 30) % 360,
+                        'circle',
+                        0,
+                        this.isRecursive,
+                        0.3 + progress * 0.2 + 0.1
+                    );
+                    
+                    sparkParticle.gravity = 0.1;
+                    this.particles.push(sparkParticle);
+                }
+            }
+        }
+    }
+
+    createDahliaEffect(particleCount) {
+        particleCount = this.getParticleCount(particleCount);
+        const layers = 6;      // Tăng số lớp
+        const petalsPerLayer = 32;  // Tăng số cánh hoa
+        const particlesPerPetal = Math.floor(particleCount / (layers * petalsPerLayer));
+
+        // Tạo hiệu ứng nổ ban đầu cực lớn
+        const burstParticles = 80;  // Tăng số lượng hạt nổ
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 5 + Math.random() * 3;  // Tăng tốc độ nổ
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+        }
+
+        // Tạo vòng sáng
+        const ringParticles = 50;
+        for (let i = 0; i < ringParticles; i++) {
+            const angle = (i / ringParticles) * Math.PI * 2;
+            const velocity = 3;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+
+        // Tạo các lớp cánh hoa
+        for (let layer = 0; layer < layers; layer++) {
+            const layerScale = 1 + layer * 0.4;  // Tăng kích thước mỗi lớp
+            const layerDelay = layer * 0.12;     // Độ trễ giữa các lớp
+            const layerHueShift = layer * 20;    // Chuyển màu giữa các lớp
+
+            for (let petal = 0; petal < petalsPerLayer; petal++) {
+                const petalAngle = (petal / petalsPerLayer) * Math.PI * 2;
+                const petalSpread = Math.PI / petalsPerLayer;  // Độ rộng cánh hoa
+
+                for (let i = 0; i < particlesPerPetal; i++) {
+                    const progress = i / particlesPerPetal;
+                    const radius = (1 + progress * 3) * layerScale;
+                    const angle = petalAngle + Math.sin(progress * Math.PI) * petalSpread;
+                    
+                    // Tính toán vị trí và vận tốc
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    
+                    // Thêm hạt chính của cánh hoa
                     this.particles.push(
                         new Particle(
-                            this.x + x,
-                            this.y + y,
-                            Math.cos(finalAngle) * trailVelocity,
-                            Math.sin(finalAngle) * trailVelocity,
-                            (this.hue + j * 5 + cluster * 20) % 360,
-                            type,
-                            0,
-                            this.isRecursive,
-                            trailDelay
+                            this.targetX,
+                            this.targetY,
+                            x,
+                            y,
+                            (this.hue + layerHueShift + progress * 30) % 360,
+                            'circle',
+                            layerDelay + progress * 0.2,
+                            false,
+                            0.9 - progress * 0.3
+                        )
+                    );
+
+                    // Thêm tia sáng
+                    if (Math.random() < 0.4) {
+                        const sparkSpread = webRandom.randomFloat(-0.3, 0.3);
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                x + sparkSpread,
+                                y + sparkSpread,
+                                (this.hue + layerHueShift + 60) % 360,
+                                'star',
+                                layerDelay + progress * 0.2 + 0.1,
+                                false,
+                                0.7
+                            )
+                        );
+                    }
+
+                    // Thêm hiệu ứng mờ ảo
+                    if (Math.random() < 0.3 && progress > 0.2) {
+                        const mistSpread = webRandom.randomFloat(-0.5, 0.5);
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                x + mistSpread,
+                                y + mistSpread,
+                                (this.hue + layerHueShift + 30) % 360,
+                                'circle',
+                                layerDelay + progress * 0.2 + 0.15,
+                                false,
+                                0.4
+                            )
+                        );
+                    }
+
+                    // Thêm hạt lấp lánh ở viền cánh
+                    if (Math.random() < 0.5 && (progress < 0.2 || progress > 0.8)) {
+                        const glitterX = x * (1.05 + Math.random() * 0.1);
+                        const glitterY = y * (1.05 + Math.random() * 0.1);
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                glitterX,
+                                glitterY,
+                                (this.hue + layerHueShift - 30) % 360,
+                                'star',
+                                layerDelay + progress * 0.1,
+                                false,
+                                0.8
+                            )
+                        );
+                    }
+                }
+            }
+        }
+
+        // Thêm hiệu ứng tia sáng từ trung tâm
+        const rayCount = 16;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * Math.PI * 2;
+            const length = 2 + Math.random() * 2;
+
+            for (let j = 0; j < 5; j++) {
+                const progress = j / 5;
+                const x = Math.cos(angle) * (length * progress);
+                const y = Math.sin(angle) * (length * progress);
+
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        x,
+                        y,
+                        (this.hue + 40) % 360,
+                        'star',
+                        0.05 + progress * 0.1,
+                        false,
+                        0.9 - progress * 0.4
+                    )
+                );
+            }
+        }
+    }
+
+    createWaterfallEffect(particleCount) {
+        particleCount = this.getParticleCount(particleCount);
+        const streamCount = 8;  // Số luồng nước
+        const particlesPerStream = Math.floor(particleCount / streamCount);
+        
+        // Tạo hiệu ứng nổ ban đầu
+        const burstParticles = 40;
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 3 + Math.random() * 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'star',
+                    0,
+                    false,
+                    0.9
+                )
+            );
+        }
+        
+        // Tạo vòng sáng
+        const ringParticles = 30;
+        for (let i = 0; i < ringParticles; i++) {
+            const angle = (i / ringParticles) * Math.PI * 2;
+            const velocity = 2;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+        
+        // Tạo các luồng nước chính
+        for (let stream = 0; stream < streamCount; stream++) {
+            const streamAngle = (stream / streamCount) * Math.PI * 2;
+            const streamSpread = Math.PI / 8;  // Độ rộng của luồng
+            
+            for (let i = 0; i < particlesPerStream; i++) {
+                const progress = i / particlesPerStream;
+                const delay = progress * 0.5;  // Độ trễ tạo hiệu ứng rơi
+                
+                // Tính toán góc và vận tốc cho từng hạt
+                const particleAngle = streamAngle + 
+                    (Math.random() - 0.5) * streamSpread + 
+                    Math.PI / 2;  // Hướng xuống
+                
+                const baseVelocity = 2 + progress * 3;  // Tăng tốc độ theo thời gian
+                const velocityX = Math.cos(particleAngle) * baseVelocity;
+                const velocityY = Math.sin(particleAngle) * baseVelocity;
+                
+                // Thêm hạt nước chính
+                this.particles.push(
+                    new Particle(
+                        this.targetX,
+                        this.targetY,
+                        velocityX,
+                        velocityY,
+                        (this.hue + progress * 30) % 360,
+                        'circle',
+                        delay,
+                        true,  // Chịu ảnh hưởng của trọng lực
+                        0.9 - progress * 0.3
+                    )
+                );
+                
+                // Thêm bọt nước
+                if (Math.random() < 0.4) {
+                    const bubbleSpread = webRandom.randomFloat(-0.5, 0.5);
+                    const bubbleVelocity = baseVelocity * 0.8;
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            velocityX + bubbleSpread,
+                            velocityY + bubbleSpread,
+                            (this.hue + 60) % 360,
+                            'star',
+                            delay + 0.1,
+                            true,
+                            0.7
+                        )
+                    );
+                }
+                
+                // Thêm hạt sương mù
+                if (Math.random() < 0.3) {
+                    const mistSpread = webRandom.randomFloat(-0.8, 0.8);
+                    const mistVelocity = baseVelocity * 0.6;
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            velocityX + mistSpread,
+                            velocityY + mistSpread,
+                            (this.hue + 40) % 360,
+                            'circle',
+                            delay + 0.2,
+                            true,
+                            0.5
+                        )
+                    );
+                }
+                
+                // Thêm tia nước bắn
+                if (Math.random() < 0.2 && progress > 0.3) {
+                    const splashAngle = particleAngle + webRandom.randomFloat(-Math.PI/4, Math.PI/4);
+                    const splashVelocity = baseVelocity * 1.2;
+                    this.particles.push(
+                        new Particle(
+                            this.targetX,
+                            this.targetY,
+                            Math.cos(splashAngle) * splashVelocity,
+                            Math.sin(splashAngle) * splashVelocity,
+                            (this.hue + 20) % 360,
+                            'star',
+                            delay + 0.15,
+                            true,
+                            0.8
                         )
                     );
                 }
             }
+        }
+        
+        // Thêm hiệu ứng lấp lánh dọc theo thác nước
+        const sparkleCount = 40;
+        for (let i = 0; i < sparkleCount; i++) {
+            const progress = i / sparkleCount;
+            const angle = Math.PI/2 + (Math.random() - 0.5) * Math.PI/4;
+            const velocity = 1 + Math.random() * 2;
+            
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 80) % 360,
+                    'star',
+                    progress * 0.3,
+                    true,
+                    0.6
+                )
+            );
         }
     }
 
     createPhoenixEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const wingSpan = 25;      // Tăng độ dài cánh từ 12 lên 25
-        const bodyLength = 30;     // Tăng độ dài thân từ 15 lên 30
-        const particleDensity = 2; // Tăng mật độ hạt
+        particleCount = this.getParticleCount(particleCount);
+        const wings = 2;
+        const layers = 4;
+        const particlesPerWing = Math.floor(particleCount / (wings * layers));
         
-        // Tạo thân chim
-        for (let i = 0; i < particleCount/2; i++) {  // Tăng số lượng hạt cho thân
-            const progress = i / (particleCount/2);
-            const x = -bodyLength/2 + progress * bodyLength;
-            const y = Math.sin(progress * Math.PI * 2) * 4;  // Tăng biên độ dao động thân
-            
-            const velocity = 4 + Math.abs(y) * 0.3;  // Tăng tốc độ
-            const angle = Math.atan2(y, x) + Math.PI/2;
-            const delay = progress * 0.3;
-            
-            // Tăng số lượng hạt cho mỗi điểm
-            for (let j = 0; j < 3; j++) {
-                const spread = webRandom.randomFloat(-0.15, 0.15);  // Tăng độ spread
-                const velocityVar = webRandom.randomFloat(-0.8, 0.8);  // Tăng biến thiên vận tốc
-                
-                this.particles.push(
-                    new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        (this.hue + progress * 50) % 360,
-                        type,
-                        0,
-                        this.isRecursive,
-                        delay + j * 0.02
-                    )
-                );
-            }
+        // Tạo hiệu ứng nổ ban đầu cực lớn
+        const burstParticles = 50;  // Tăng số lượng hạt nổ
+        for (let i = 0; i < burstParticles; i++) {
+            const angle = (i / burstParticles) * Math.PI * 2;
+            const velocity = 4 + Math.random() * 2;  // Tăng tốc độ nổ
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 60) % 360,  // Màu vàng rực
+                    'star',
+                    0,
+                    false,
+                    1
+                )
+            );
         }
-        
-        // Tạo cánh
-        for (let side = -1; side <= 1; side += 2) {
-            for (let i = 0; i < particleCount * 0.8; i++) {  // Tăng số lượng hạt cho cánh
-                const progress = i / (particleCount * 0.8);
-                const angle = progress * Math.PI - Math.PI/2;
-                const r = wingSpan * Math.sin(progress * Math.PI);
+
+        // Tạo vòng lửa xoay
+        const fireRingParticles = 40;
+        for (let i = 0; i < fireRingParticles; i++) {
+            const angle = (i / fireRingParticles) * Math.PI * 2;
+            const velocity = 3;
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity,
+                    (this.hue + 30) % 360,
+                    'circle',
+                    0.1,
+                    false,
+                    0.8
+                )
+            );
+        }
+
+        // Tạo cánh phượng hoàng
+        for (let layer = 0; layer < layers; layer++) {
+            const layerScale = 1 + layer * 0.3;  // Tăng kích thước mỗi lớp
+            const layerDelay = layer * 0.15;
+            
+            for (let wing = 0; wing < wings; wing++) {
+                const isRightWing = wing === 1;
+                const sideMultiplier = isRightWing ? 1 : -1;
                 
-                // Thêm hiệu ứng uốn cong cho cánh
-                const curve = Math.sin(progress * Math.PI) * 5;
-                const x = Math.cos(angle) * r + curve;
-                const y = Math.sin(angle) * r * side;
-                
-                const velocity = 4 + r * 0.3;  // Tăng tốc độ
-                const particleAngle = Math.atan2(y, x);
-                const delay = progress * 0.4;
-                
-                // Tăng số lượng hạt cho mỗi điểm
-                for (let j = 0; j < 3; j++) {
-                    const spread = webRandom.randomFloat(-0.2, 0.2);
-                    const velocityVar = webRandom.randomFloat(-0.5, 0.5);
+                for (let i = 0; i < particlesPerWing; i++) {
+                    const progress = i / particlesPerWing;
+                    const t = progress * Math.PI;
                     
+                    // Tạo hình dạng cánh uốn cong
+                    const wingAngle = Math.PI * 0.3;  // Góc cánh rộng hơn
+                    const x = sideMultiplier * (Math.sin(t) * Math.cos(wingAngle) * 3 * layerScale);
+                    const y = -Math.cos(t) * Math.sin(wingAngle) * 4 * layerScale;  // Kéo dài cánh
+                    
+                    // Tính vận tốc để tạo hiệu ứng bay lên
+                    const velocity = 2 + Math.sin(progress * Math.PI) * 2;
+                    const angle = Math.atan2(y, x);
+                    const vx = Math.cos(angle) * velocity;
+                    const vy = Math.sin(angle) * velocity - 0.5;  // Thêm lực đẩy lên trên
+                    
+                    // Thêm các hạt chính tạo thành cánh
+                    const hueShift = layer * 15 + progress * 30;
                     this.particles.push(
                         new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(particleAngle + spread) * (velocity + velocityVar),
-                            Math.sin(particleAngle + spread) * (velocity + velocityVar),
-                            (this.hue + 20 + progress * 30) % 360,
-                            type,
-                            0,
-                            this.isRecursive,
-                            delay + j * 0.02
+                            this.targetX,
+                            this.targetY,
+                            vx,
+                            vy,
+                            (this.hue + hueShift) % 360,
+                            'circle',
+                            layerDelay + progress * 0.2,
+                            false,
+                            0.9 - progress * 0.3
                         )
                     );
+                    
+                    // Thêm các hạt lửa
+                    if (Math.random() < 0.4) {
+                        const fireSpread = webRandom.randomFloat(-0.3, 0.3);
+                        const fireVelocity = velocity * 1.2;
+                        const fireAngle = angle + fireSpread;
+                        const fireVx = Math.cos(fireAngle) * fireVelocity;
+                        const fireVy = Math.sin(fireAngle) * fireVelocity - 0.8;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                fireVx,
+                                fireVy,
+                                (this.hue + hueShift + 60) % 360,  // Màu lửa rực rỡ
+                                'star',
+                                layerDelay + progress * 0.1,
+                                false,
+                                0.8
+                            )
+                        );
+                    }
+                    
+                    // Thêm khói và tia lửa
+                    if (Math.random() < 0.3 && progress > 0.2) {
+                        const smokeSpread = webRandom.randomFloat(-0.4, 0.4);
+                        const smokeVelocity = velocity * 0.7;
+                        const smokeAngle = angle + smokeSpread;
+                        const smokeVx = Math.cos(smokeAngle) * smokeVelocity;
+                        const smokeVy = Math.sin(smokeAngle) * smokeVelocity - 0.3;
+                        
+                        this.particles.push(
+                            new Particle(
+                                this.targetX,
+                                this.targetY,
+                                smokeVx,
+                                smokeVy,
+                                (this.hue + hueShift - 30) % 360,
+                                'circle',
+                                layerDelay + progress * 0.25,
+                                false,
+                                0.4
+                            )
+                        );
+                    }
                 }
             }
         }
+
+        // Tạo đuôi phượng hoàng
+        const tailFeathers = 15;  // Tăng số lượng lông đuôi
+        const tailSpread = Math.PI * 0.3;  // Độ rộng của đuôi
         
-        // Thêm đuôi phượng hoàng
-        const tailLength = wingSpan * 1.2;
-        const tailSpread = Math.PI/6;
-        for (let i = 0; i < particleCount/3; i++) {
-            const progress = i / (particleCount/3);
-            const baseAngle = -Math.PI/2;
-            const spread = tailSpread * (progress - 0.5);
-            const r = tailLength * Math.pow(progress, 0.8);
+        for (let i = 0; i < tailFeathers; i++) {
+            const progress = i / tailFeathers;
+            const angle = -Math.PI / 2 + (progress - 0.5) * tailSpread;
+            const velocity = 3 + Math.random();
             
-            const x = Math.cos(baseAngle + spread) * r;
-            const y = Math.sin(baseAngle + spread) * r;
+            // Lông đuôi chính
+            this.particles.push(
+                new Particle(
+                    this.targetX,
+                    this.targetY,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity + 1,  // Bay lên trên
+                    (this.hue + progress * 30) % 360,
+                    'circle',
+                    0.2,
+                    false,
+                    0.9
+                )
+            );
             
-            const velocity = 5 + r * 0.2;
-            const angle = Math.atan2(y, x);
-            const delay = progress * 0.3;
-            
-            for (let j = 0; j < 3; j++) {
-                const particleSpread = webRandom.randomFloat(-0.1, 0.1);
-                const velocityVar = webRandom.randomFloat(-0.5, 0.5);
+            // Thêm tia lửa cho đuôi
+            if (Math.random() < 0.5) {
+                const sparkSpread = webRandom.randomFloat(-0.2, 0.2);
+                const sparkVelocity = velocity * 1.1;
+                const sparkAngle = angle + sparkSpread;
                 
                 this.particles.push(
                     new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + particleSpread) * (velocity + velocityVar),
-                        Math.sin(angle + particleSpread) * (velocity + velocityVar),
-                        (this.hue + 40 + progress * 40) % 360,
-                        type,
-                        0,
-                        this.isRecursive,
-                        delay + j * 0.02
+                        this.targetX,
+                        this.targetY,
+                        Math.cos(sparkAngle) * sparkVelocity,
+                        Math.sin(sparkAngle) * sparkVelocity + 0.8,
+                        (this.hue + 60) % 360,
+                        'star',
+                        0.1,
+                        false,
+                        0.7
                     )
                 );
             }
         }
     }
 
-    createParabolaEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        const numParabolas = 5;
-        
-        for (let p = 0; p < numParabolas; p++) {
-            const a = webRandom.randomFloat(0.1, 0.3); // Độ cong của parabol
-            const h = webRandom.randomFloat(-5, 5);    // Dịch chuyển ngang
-            const k = webRandom.randomFloat(-5, 5);    // Dịch chuyển dọc
-            const direction = p % 2 === 0 ? 1 : -1;    // Hướng mở của parabol
+    createSecondaryExplosions() {
+        const numExplosions = webRandom.randomInt(2, 4);
+        for (let i = 0; i < numExplosions; i++) {
+            const angle = (i / numExplosions) * Math.PI * 2;
+            const distance = webRandom.randomFloat(2, 4);
             
-            for (let i = 0; i < particleCount/numParabolas; i++) {
-                const progress = i / (particleCount/numParabolas);
-                const x = -10 + progress * 20;  // x từ -10 đến 10
-                const y = direction * a * Math.pow(x - h, 2) + k;
-                
-                const velocity = 3 + Math.abs(y) * 0.2;
-                const angle = Math.atan2(y, x);
-                const delay = progress * 0.3 + p * 0.1;
-                
-                // Tạo chuỗi hạt dọc theo parabol
-                for (let j = 0; j < 3; j++) {
-                    const spread = webRandom.randomFloat(-0.1, 0.1);
-                    const velocityVar = webRandom.randomFloat(-0.5, 0.5);
-                    
-                    this.particles.push(
-                        new Particle(
-                            this.x,
-                            this.y,
-                            Math.cos(angle + spread) * (velocity + velocityVar),
-                            Math.sin(angle + spread) * (velocity + velocityVar),
-                            (this.hue + p * 30 + j * 5) % 360,
-                            type,
-                            0,
-                            this.isRecursive,
-                            delay + j * 0.02
-                        )
-                    );
-                }
-            }
+            setTimeout(() => {
+                const recursive = new Firework(
+                    this.targetX + Math.cos(angle) * distance,
+                    this.targetY + Math.sin(angle) * distance,
+                    this.targetX + Math.cos(angle) * (distance + 1),
+                    this.targetY + Math.sin(angle) * (distance + 1)
+                );
+                recursive.isRecursive = true;
+                recursive.hue = this.hue;
+                recursive.explode();
+            }, webRandom.randomFloat(200, 400));
         }
     }
 
-    createTextEffect(particleCount) {
-        const types = ['circle', 'star'];
-        const type = types[webRandom.randomInt(0, types.length - 1)];
-        
-        // Danh sách các chữ ngẫu nhiên
-        const texts = ['2024', '❤️', '★', '✿', 'HNY'];
-        const text = texts[webRandom.randomInt(0, texts.length - 1)];
-        
-        // Tạo canvas tạm để vẽ text
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const fontSize = 30;
-        tempCanvas.width = fontSize * text.length;
-        tempCanvas.height = fontSize * 1.5;
-        
-        // Vẽ text
-        tempCtx.font = `${fontSize}px Arial`;
-        tempCtx.fillStyle = 'white';
-        tempCtx.textAlign = 'center';
-        tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
-        
-        // Lấy pixel data
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const pixels = imageData.data;
-        const points = [];
-        
-        // Tìm các điểm có pixel
-        const step = 2; // Bước nhảy để giảm số lượng hạt
-        for (let y = 0; y < tempCanvas.height; y += step) {
-            for (let x = 0; x < tempCanvas.width; x += step) {
-                const i = (y * tempCanvas.width + x) * 4;
-                if (pixels[i + 3] > 0) { // Kiểm tra alpha channel
-                    points.push({
-                        x: (x - tempCanvas.width/2) / (fontSize/2),
-                        y: (y - tempCanvas.height/2) / (fontSize/2)
-                    });
-                }
-            }
-        }
-        
-        // Tạo particles từ các điểm tìm được
-        const numPoints = Math.min(points.length, particleCount);
-        for (let i = 0; i < numPoints; i++) {
-            const point = points[Math.floor(i / numPoints * points.length)];
-            const velocity = webRandom.randomFloat(2, 4);
-            const angle = Math.atan2(point.y, point.x);
-            const distance = Math.sqrt(point.x * point.x + point.y * point.y);
-            const delay = (distance / 10) * 0.3; // Delay dựa trên khoảng cách
-            
-            // Tạo cluster cho mỗi điểm
-            for (let j = 0; j < 2; j++) {
-                const spread = webRandom.randomFloat(-0.1, 0.1);
-                const velocityVar = webRandom.randomFloat(-0.2, 0.2);
-                
-                this.particles.push(
-                    new Particle(
-                        this.x,
-                        this.y,
-                        Math.cos(angle + spread) * (velocity + velocityVar),
-                        Math.sin(angle + spread) * (velocity + velocityVar),
-                        (this.hue + i * 2) % 360,
-                        type,
-                        0,
-                        this.isRecursive,
-                        delay + j * 0.02
-                    )
-                );
-            }
+    static PERFORMANCE_MODE = {
+        HIGH: 'high',     // Chất lượng cao, nhiều hạt
+        MEDIUM: 'medium', // Cân bằng
+        LOW: 'low'       // Ít hạt, hiệu năng tốt
+    };
+
+    static currentPerformanceMode = Firework.PERFORMANCE_MODE.MEDIUM;
+
+    static setPerformanceMode(mode) {
+        this.currentPerformanceMode = mode;
+    }
+
+    getParticleCount(baseCount) {
+        switch(Firework.currentPerformanceMode) {
+            case Firework.PERFORMANCE_MODE.HIGH:
+                return baseCount;
+            case Firework.PERFORMANCE_MODE.MEDIUM:
+                return Math.floor(baseCount * 0.6);
+            case Firework.PERFORMANCE_MODE.LOW:
+                return Math.floor(baseCount * 0.3);
+            default:
+                return baseCount;
         }
     }
 }
