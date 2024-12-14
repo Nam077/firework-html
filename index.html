@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Year Fireworks</title>
+    <link rel="stylesheet" href="public/styles/style.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: rgba(0,0,0,0.9);
+            color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #fff;
+        }
+
+        .help-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .help-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .modal h2 {
+            color: #fff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal li {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .modal kbd {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworks"></canvas>
+    <div class="content" id="content">
+        <h1>Happy New Year 2025!</h1>
+        <div class="countdown" id="countdown">
+            <div class="time">
+                <span id="days">00</span>
+                <span class="label">Days</span>
+            </div>
+            <div class="time">
+                <span id="hours">00</span>
+                <span class="label">Hours</span>
+            </div>
+            <div class="time">
+                <span id="minutes">00</span>
+                <span class="label">Minutes</span>
+            </div>
+            <div class="time">
+                <span id="seconds">00</span>
+                <span class="label">Seconds</span>
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <button id="toggleUI" class="toggle-button">Toggle UI</button>
+        <button class="help-btn" onclick="openHelp()">Hướng dẫn</button>
+    </div>
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>🎆 Hướng dẫn sử dụng 🎆</h2>
+            <ul>
+                <li><kbd>Space</kbd> Chuyển đổi giữa chế độ ngẫu nhiên và kịch bản</li>
+                <li><kbd>1</kbd> Kịch bản 1: Lễ hội ánh sáng (6 cảnh)</li>
+                <li><kbd>2</kbd> Kịch bản 2: Vũ điệu tình yêu (6 cảnh)</li>
+                <li><kbd>3</kbd> Kịch bản 3: Bão lửa rồng (6 cảnh)</li>
+            </ul>
+            <h2>🎆 Chi tiết kịch bản 🎆</h2>
+            <ul>
+                <li>
+                    <strong>Lễ hội ánh sáng:</strong><br>
+                    Hoa đăng → Vòng hoa sen → Vũ điệu ánh sáng → Mưa sao băng → Vòng xoắn kép → Kết thúc rực rỡ
+                </li>
+                <li>
+                    <strong>Vũ điệu tình yêu:</strong><br>
+                    Bướm đôi → Vòng trái tim → Thiên thần → Mưa tình yêu → Vũ điệu thiên thần → Kết thúc ngọt ngào
+                </li>
+                <li>
+                    <strong>Bão lửa rồng:</strong><br>
+                    Rồng thức tỉnh → Vòng xoáy rồng → Xoáy lốc lửa → Mưa sao lửa → Vũ điệu rồng → Kết thúc hoành tráng
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script type="module" src="public/js/main.js"></script>
+    <script>
+        // Modal control
+        const modal = document.getElementById('helpModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        
+        function openHelp() {
+            modal.style.display = "block";
+        }
+        
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Show modal on first visit
+        if (!localStorage.getItem('hasVisited')) {
+            openHelp();
+            localStorage.setItem('hasVisited', true);
+        }
+    </script>
+</body>
+</html>
