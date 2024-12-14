@@ -202,8 +202,18 @@
         .switch-label {
             color: white;
             font-size: 14px;
-            margin-top: 5px;
             text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            position: absolute;
+            right: 70px;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .switch-container:hover .switch-label {
+            opacity: 1;
+            transform: translateX(0);
         }
 
         /* Controls container */
@@ -396,7 +406,7 @@
             <input type="checkbox" id="uiToggle" checked>
             <span class="slider"></span>
         </label>
-        <span class="switch-label">Công tắc</span>
+        <span class="switch-label">Tắt/bật giao diện</span>
     </div>
     <div id="helpModal" class="modal">
         <div class="modal-content">
